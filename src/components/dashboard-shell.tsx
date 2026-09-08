@@ -52,10 +52,12 @@ const NAV: Record<Role, NavItem[]> = {
     { icon: BookOpen, label: "Nutrition Plans", path: "/coach/nutrition" },
     { icon: MessageSquareText, label: "Messages", path: "/coach/messages", badge: 5 },
     { icon: UserCheck, label: "Client Progress", path: "/coach/progress" },
+    { icon: User, label: "My Profile", path: "/coach/profile" },
     { icon: Settings, label: "Settings", path: "/coach/settings" },
   ],
   admin: [
     { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
+    { icon: Users, label: "Coaches", path: "/admin/coaches" },
     { icon: FileText, label: "Policies", path: "/admin/policies" },
     { icon: Settings, label: "Settings", path: "/admin/settings" },
   ],

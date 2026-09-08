@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { CoachCard, CoachDetail, ConsultState } from "@/lib/coach-data";
+import { SPECIALTIES } from "@/lib/coach-data";
 
 export async function listCoaches(): Promise<CoachCard[]> {
   try {
@@ -196,5 +197,173 @@ export async function decideConsult(
   if (updError) return { error: "Couldn't update. Try again." };
 
   revalidatePath("/coach/messages");
+  return {};
+}
+
+export interface MyCoachProfile {
+  displayName: string;
+  bio: string;
+  specialties: string[];
+  specialtiesOther: string;
+  years: number;
+  certifications: string;
+  whatsapp: string;
+  freeConsult: boolean;
+  approved: boolean;
+  exists: boolean;
+}
+
+export async function getMyCoachProfile(): Promise<MyCoachProfile | null> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return null;
+    const [{ data: profile }, { data: row }] = await Promise.all([
+      supabase.from("profiles").select("name").eq("id", user.id).single(),
+      supabase.from("coach_profiles").select("*").eq("profile_id", user.id).single(),
+    ]);
+    return {
+      displayName: String(row?.display_name ?? profile?.name ?? ""),
+      bio: String(row?.bio ?? ""),
+      specialties: (row?.specialties as string[] | null) ?? [],
+      specialtiesOther: String(row?.specialties_other ?? ""),
+      years: Number(row?.years_experience ?? 0),
+      certifications: ((row?.certifications as string[] | null) ?? []).join("\n"),
+      whatsapp: String(row?.whatsapp ?? ""),
+      freeConsult: row?.offers_free_consult ?? true,
+      approved: !!row?.approved,
+      exists: !!row,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export type ProfileState = { error?: string; ok?: boolean };
+
+export async function saveCoachProfile(
+  _prev: ProfileState,
+  formData: FormData
+): Promise<ProfileState> {
+  const displayName = String(formData.get("displayName") ?? "").trim().slice(0, 80);
+  const bio = String(formData.get("bio") ?? "").trim().slice(0, 1000);
+  const specialties = formData
+    .getAll("specialties")
+    .map((s) => String(s))
+    .filter((s) => (SPECIALTIES as readonly string[]).includes(s));
+  const specialtiesOther = String(formData.get("specialtiesOther") ?? "").trim().slice(0, 200);
+  const years = Math.max(0, Math.min(60, parseInt(String(formData.get("years") ?? "0"), 10) || 0));
+  const certifications = String(formData.get("certifications") ?? "")
+    .split("\n")
+    .map((c) => c.trim())
+    .filter(Boolean)
+    .slice(0, 20);
+  const whatsapp = String(formData.get("whatsapp") ?? "").replace(/\D/g, "").slice(0, 20);
+  const freeConsult = formData.get("freeConsult") === "on";
+  if (!displayName) return { error: "Display name can't be empty." };
+
+  let supabase;
+  try {
+    supabase = await createClient();
+  } catch {
+    return { error: "Supabase not connected yet — profile not saved." };
+  }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You're signed out. Sign in again." };
+
+  const { error } = await supabase.from("coach_profiles").upsert(
+    {
+      profile_id: user.id,
+      display_name: displayName,
+      bio,
+      specialties,
+      specialties_other: specialtiesOther,
+      years_experience: years,
+      certifications,
+      whatsapp,
+      offers_free_consult: freeConsult,
+    },
+    { onConflict: "profile_id" }
+  );
+  if (error) return { error: "Couldn't save. Try again." };
+
+  revalidatePath("/coaches");
+  revalidatePath("/coach/profile");
+  return { ok: true };
+}
+
+export interface PendingCoach {
+  profileId: string;
+  name: string;
+  displayName: string;
+  bio: string;
+  years: number;
+  approved: boolean;
+}
+
+export async function listCoachesForAdmin(): Promise<PendingCoach[]> {
+  try {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("coach_profiles")
+      .select("profile_id, display_name, bio, years_experience, approved")
+      .order("created_at", { ascending: false });
+    if (error || !data) return [];
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, name")
+      .in(
+        "id",
+        data.map((r) => r.profile_id)
+      );
+    const names = new Map((profiles ?? []).map((p) => [p.id, p.name]));
+    return data.map((r) => ({
+      profileId: r.profile_id,
+      name: (names.get(r.profile_id) as string) ?? "?",
+      displayName: String(r.display_name ?? ""),
+      bio: String(r.bio ?? ""),
+      years: Number(r.years_experience ?? 0),
+      approved: !!r.approved,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export async function decideApproval(
+  _prev: DecideState,
+  formData: FormData
+): Promise<DecideState> {
+  const profileId = String(formData.get("profileId") ?? "");
+  const approved = formData.get("approved") === "true";
+  if (!profileId) return { error: "Invalid request." };
+  let supabase;
+  try {
+    supabase = await createClient();
+  } catch {
+    return { error: "Supabase not connected yet." };
+  }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You're signed out. Sign in again." };
+  // RLS admin-all policy is the real gate; this keeps honest errors.
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  if (me?.role !== "admin") return { error: "Admins only." };
+  const { error } = await supabase
+    .from("coach_profiles")
+    .update({ approved })
+    .eq("profile_id", profileId);
+  if (error) return { error: "Couldn't update. Try again." };
+  revalidatePath("/admin/coaches");
+  revalidatePath("/coaches");
   return {};
 }
