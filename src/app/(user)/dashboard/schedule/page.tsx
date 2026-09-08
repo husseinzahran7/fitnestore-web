@@ -13,7 +13,7 @@ export default async function UserSchedulePage() {
         {!live && " • preview data (connect Supabase for live schedule)"}
       </p>
       <div className="mt-6">
-        <UserSchedule week={live ? week : weeklyWorkouts} />
+        <UserSchedule week={live ? week : weeklyWorkouts} live={live} />
       </div>
     </div>
   );

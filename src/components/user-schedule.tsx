@@ -13,7 +13,7 @@ const DAYS = [
   "sunday",
 ];
 
-export default function UserSchedule({ week }: { week: WeeklyWorkouts }) {
+export default function UserSchedule({ week, live = false }: { week: WeeklyWorkouts; live?: boolean }) {
   const today = new Date()
     .toLocaleDateString("en-US", { weekday: "long" })
     .toLowerCase();
@@ -51,15 +51,25 @@ export default function UserSchedule({ week }: { week: WeeklyWorkouts }) {
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="font-bold">{s.title}</h3>
-              <span
-                className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                  s.completed
-                    ? "bg-green-500/15 text-green-400"
-                    : "bg-white/10 text-slate-300"
-                }`}
-              >
-                {s.completed ? "Done" : s.time}
-              </span>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    s.completed
+                      ? "bg-green-500/15 text-green-400"
+                      : "bg-white/10 text-slate-300"
+                  }`}
+                >
+                  {s.completed ? "Done" : s.time}
+                </span>
+                {live && (
+                  <a
+                    href={`/dashboard/schedule/track/${s.id}`}
+                    className="rounded-full bg-brand-500 px-4 py-1.5 text-xs font-bold text-white transition-colors hover:bg-brand-400"
+                  >
+                    Start
+                  </a>
+                )}
+              </div>
             </div>
             <p className="mt-1 text-sm text-slate-400">
               {s.description} • {s.duration}
