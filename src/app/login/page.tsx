@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import GoogleButton from "@/components/google-button";
+import DemoLogins from "@/components/demo-logins";
 import { login, type AuthState } from "./actions";
 
 const initial: AuthState = {};
@@ -85,6 +86,8 @@ export default function LoginPage() {
           <span className="h-px flex-1 bg-white/10" />
         </div>
         <GoogleButton label="Continue with Google" />
+
+        <DemoLogins />
       </div>
     </div>
   );
