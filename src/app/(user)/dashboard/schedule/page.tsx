@@ -2,19 +2,21 @@ import UserSchedule from "@/components/user-schedule";
 import { weeklyWorkouts } from "@/data/mockWorkouts";
 import { getUserScheduleWeek } from "@/lib/schedule-queries";
 import { getUserAppointments } from "@/lib/schedule";
+import { getDict } from "@/lib/i18n";
 
 export default async function UserSchedulePage() {
-  const [{ week, live }, { items: appointments }] = await Promise.all([
+  const [{ week, live }, { items: appointments }, t] = await Promise.all([
     getUserScheduleWeek(),
     getUserAppointments(),
+    getDict(),
   ]);
 
   return (
     <div>
-      <h1 className="text-3xl font-extrabold tracking-tight">Schedule</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight">{t.nav.schedule}</h1>
       <p className="mt-1 text-sm text-slate-400">
-        Your training week.
-        {!live && " • preview data (connect Supabase for live schedule)"}
+        {t.pages.yourTrainingWeek}
+        {!live && t.pages.previewSchedule}
       </p>
       <div className="mt-6">
         <UserSchedule week={live ? week : weeklyWorkouts} live={live} />

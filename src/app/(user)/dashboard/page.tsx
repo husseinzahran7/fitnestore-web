@@ -6,48 +6,49 @@ import {
   Settings,
 } from "lucide-react";
 import { getViewer } from "@/lib/supabase/server";
-
-const cards = [
-  {
-    icon: CalendarDays,
-    title: "Schedule",
-    text: "This week's workouts and sessions.",
-    href: "/dashboard/schedule",
-  },
-  {
-    icon: BarChart3,
-    title: "Progress",
-    text: "Weight, strength, measurements.",
-    href: "/dashboard/progress",
-  },
-  {
-    icon: MessageSquareText,
-    title: "Messages",
-    text: "Chat with your coach.",
-    href: "/dashboard/messages",
-  },
-  {
-    icon: Settings,
-    title: "Settings",
-    text: "Profile and preferences.",
-    href: "/dashboard/settings",
-  },
-];
+import { getDict, getLocale } from "@/lib/i18n";
 
 export default async function UserDashboard() {
   const viewer = await getViewer();
+  const [t, locale] = await Promise.all([getDict(), getLocale()]);
+  const cards = [
+    {
+      icon: CalendarDays,
+      title: t.nav.schedule,
+      text: t.pages.scheduleDesc,
+      href: "/dashboard/schedule",
+    },
+    {
+      icon: BarChart3,
+      title: t.nav.progress,
+      text: t.pages.progressDesc,
+      href: "/dashboard/progress",
+    },
+    {
+      icon: MessageSquareText,
+      title: t.nav.messages,
+      text: t.pages.messagesDesc,
+      href: "/dashboard/messages",
+    },
+    {
+      icon: Settings,
+      title: t.nav.settings,
+      text: t.pages.settingsDesc,
+      href: "/dashboard/settings",
+    },
+  ];
 
   return (
     <div>
       <p className="text-sm text-slate-400">
-        {new Date().toLocaleDateString("en-US", {
+        {new Date().toLocaleDateString(locale === "ar" ? "ar-EG" : "en-US", {
           weekday: "long",
           month: "long",
           day: "numeric",
         })}
       </p>
       <h1 className="mt-1 text-3xl font-extrabold tracking-tight">
-        Hey {viewer?.name ?? "there"} — let&apos;s train.
+        {t.pages.hey} {viewer?.name ?? "there"} {t.pages.letsTrain}
       </h1>
 
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
