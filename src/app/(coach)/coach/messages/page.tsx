@@ -1,6 +1,8 @@
 import MessageThread from "@/components/message-thread";
+import ConsultInbox from "@/components/consult-inbox";
 import type { Conversation } from "@/data/mockConversations";
 import { getConversations, sendMessage } from "@/lib/messaging";
+import { getConsultRequests } from "@/lib/coaches";
 
 // Preview roster mapped from legacy coach dummy threads (string timestamps
 // normalized; realtime + exact history land with Supabase).
@@ -57,6 +59,7 @@ export default async function CoachMessagesPage() {
   const { conversations: liveConversations, live } =
     await getConversations("coach");
   const conversations = live ? liveConversations : coachConversations;
+  const requests = await getConsultRequests();
 
   return (
     <div>
@@ -66,6 +69,7 @@ export default async function CoachMessagesPage() {
         {!live && " • preview data (live chat activates with your first client thread)"}
       </p>
       <div className="mt-6">
+        <ConsultInbox requests={requests} />
         <MessageThread
           me="coach"
           conversations={conversations}

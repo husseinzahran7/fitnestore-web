@@ -8,6 +8,7 @@ const links = [
   { label: "Coaches", href: "#coaches" },
   { label: "Clients", href: "#clients" },
   { label: "Pricing", href: "#pricing" },
+  { label: "Find a coach", href: "/coaches" },
 ];
 
 export default function SiteHeader() {
