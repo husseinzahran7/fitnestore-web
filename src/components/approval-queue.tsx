@@ -42,7 +42,7 @@ export default function ApprovalQueue({
               <span className="text-xs text-slate-500">{c.years} yrs</span>
             </div>
             {c.bio && (
-              <p className="mt-1 truncate text-sm text-slate-400">{c.bio}</p>
+              <p className="mt-1 line-clamp-2 text-sm text-slate-400">{c.bio}</p>
             )}
           </div>
           <div className="flex shrink-0 gap-2">
