@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import AuthLinks from "@/components/auth-links";
 
 const links = [
   { label: "Coaches", href: "#coaches" },
@@ -37,21 +38,7 @@ export default function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <a
-            href="/login"
-            className="text-sm font-medium text-slate-300 transition-colors hover:text-white"
-          >
-            Sign in
-          </a>
-          <motion.a
-            href="/register"
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.97 }}
-            className="inline-flex items-center gap-1.5 rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-500/30 transition-colors hover:bg-brand-400"
-          >
-            Start coaching
-            <ArrowRight size={16} />
-          </motion.a>
+          <AuthLinks />
         </div>
 
         <button
@@ -82,14 +69,7 @@ export default function SiteHeader() {
                   {l.label}
                 </a>
               ))}
-              <a
-                href="/register"
-                onClick={() => setOpen(false)}
-                className="mt-2 flex items-center justify-center gap-1.5 rounded-full bg-brand-500 px-5 py-3 text-sm font-semibold text-white"
-              >
-                Start coaching
-                <ArrowRight size={16} />
-              </a>
+              <AuthLinks mobile />
             </div>
           </motion.nav>
         )}
