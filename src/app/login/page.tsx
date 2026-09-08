@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { Suspense, useActionState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import GoogleButton from "@/components/google-button";
 import DemoLogins from "@/components/demo-logins";
 import { login, type AuthState } from "./actions";
@@ -9,7 +10,16 @@ import { login, type AuthState } from "./actions";
 const initial: AuthState = {};
 
 export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const [state, action, pending] = useActionState(login, initial);
+  const next = useSearchParams().get("next");
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-ink-950 px-4">
@@ -26,6 +36,9 @@ export default function LoginPage() {
         </p>
 
         <form action={action} className="mt-6 space-y-4">
+          {next && next.startsWith("/") && !next.startsWith("//") && (
+            <input type="hidden" name="next" value={next} />
+          )}
           <div>
             <label htmlFor="email" className="mb-1.5 block text-sm font-medium">
               Email

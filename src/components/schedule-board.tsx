@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { CalendarClock } from "lucide-react";
 import type { ScheduleItem } from "@/data/mockSchedule";
 
@@ -12,7 +12,15 @@ function statusStyle(status: ScheduleItem["status"]) {
   return "bg-red-500/15 text-red-400";
 }
 
-export default function ScheduleBoard({ items }: { items: ScheduleItem[] }) {
+export default function ScheduleBoard({
+  items,
+  icsBase,
+  onStatus,
+}: {
+  items: ScheduleItem[];
+  icsBase?: string;
+  onStatus?: (id: string, status: string) => Promise<{ error?: string }>;
+}) {
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
 
   const grouped = useMemo(() => {
@@ -121,6 +129,17 @@ export default function ScheduleBoard({ items }: { items: ScheduleItem[] }) {
                     >
                       {s.status}
                     </span>
+                    {icsBase && (
+                      <a
+                        href={`${icsBase}/${s.id}/ics`}
+                        className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-300 hover:bg-white/20 hover:text-white"
+                      >
+                        Add to calendar
+                      </a>
+                    )}
+                    {onStatus && s.status === "upcoming" && (
+                      <StatusButtons id={s.id} onStatus={onStatus} />
+                    )}
                   </div>
                 </div>
               ))}
@@ -129,5 +148,44 @@ export default function ScheduleBoard({ items }: { items: ScheduleItem[] }) {
         ))}
       </div>
     </div>
+  );
+}
+
+function StatusButtons({
+  id,
+  onStatus,
+}: {
+  id: string;
+  onStatus: (id: string, status: string) => Promise<{ error?: string }>;
+}) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  const act = (status: string) =>
+    startTransition(async () => {
+      const res = await onStatus(id, status);
+      setError(res?.error ?? null);
+    });
+
+  return (
+    <span className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => act("completed")}
+        disabled={pending}
+        className="rounded-full bg-green-500/15 px-3 py-1 text-xs font-bold text-green-400 hover:bg-green-500/25 disabled:opacity-50"
+      >
+        Done
+      </button>
+      <button
+        type="button"
+        onClick={() => act("cancelled")}
+        disabled={pending}
+        className="rounded-full bg-red-500/15 px-3 py-1 text-xs font-bold text-red-400 hover:bg-red-500/25 disabled:opacity-50"
+      >
+        Cancel
+      </button>
+      {error && <span className="text-xs text-red-400">{error}</span>}
+    </span>
   );
 }

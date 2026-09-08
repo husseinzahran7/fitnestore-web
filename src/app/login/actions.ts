@@ -38,6 +38,7 @@ export async function login(
   const supabase = await createClient();
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const next = String(formData.get("next") ?? "");
 
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -46,7 +47,9 @@ export async function login(
   if (error || !data.user) return { error: "Invalid email or password." };
 
   revalidatePath("/", "layout");
-  redirect(await homeForRole(supabase, data.user.id, email.split("@")[0]));
+  const home = await homeForRole(supabase, data.user.id, email.split("@")[0]);
+  if (next.startsWith("/") && !next.startsWith("//")) redirect(next);
+  redirect(home);
 }
 
 export async function signup(
