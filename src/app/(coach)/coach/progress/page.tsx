@@ -15,7 +15,7 @@ export default async function CoachProgressPage() {
         {!live && " • preview data (log metrics for live charts)"}
       </p>
       <div className="mt-6">
-        <ProgressBoard clients={live ? clients : mockClients} />
+        <ProgressBoard clients={live ? clients : mockClients} live={live} />
       </div>
     </div>
   );

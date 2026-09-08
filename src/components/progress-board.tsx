@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
+import { logClientMetric } from "@/lib/progress-actions";
 import {
   CartesianGrid,
   Line,
@@ -19,7 +20,13 @@ const METRICS: Array<{ key: MetricType; label: string; color: string }> = [
   { key: "endurance", label: "Endurance", color: "#a855f7" },
 ];
 
-export default function ProgressBoard({ clients }: { clients: Client[] }) {
+export default function ProgressBoard({
+  clients,
+  live = false,
+}: {
+  clients: Client[];
+  live?: boolean;
+}) {
   const [clientId, setClientId] = useState(clients[0]?.id ?? "");
   const [metric, setMetric] = useState<MetricType>("weight");
 
@@ -118,6 +125,8 @@ export default function ProgressBoard({ clients }: { clients: Client[] }) {
         </div>
       </div>
 
+      <h2 className="mt-8 text-lg font-bold">Log metrics</h2>
+      {live && client && <MetricLogForm key={client.id} clientId={client.id} />}
       <h2 className="mt-8 text-lg font-bold">Check-ins</h2>
       <div className="mt-3 space-y-3">
         {client.checkIns.map((c) => (
@@ -142,5 +151,63 @@ export default function ProgressBoard({ clients }: { clients: Client[] }) {
         ))}
       </div>
     </div>
+  );
+}
+
+function MetricLogForm({ clientId }: { clientId: string }) {
+  const [state, action, pending] = useActionState(logClientMetric, {});
+
+  return (
+    <form
+      action={action}
+      className="mt-3 flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:flex-row sm:items-end"
+    >
+      <input type="hidden" name="clientId" value={clientId} />
+      <div className="flex-1">
+        <label htmlFor={`weight-${clientId}`} className="mb-1.5 block text-sm font-medium">
+          Weight (kg)
+        </label>
+        <input
+          id={`weight-${clientId}`}
+          name="weight"
+          type="number"
+          step="0.1"
+          min="1"
+          placeholder="80.5"
+          className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm outline-none placeholder:text-slate-500 focus:border-brand-500"
+        />
+      </div>
+      <div className="flex-1">
+        <label htmlFor={`bodyFat-${clientId}`} className="mb-1.5 block text-sm font-medium">
+          Body fat (%)
+        </label>
+        <input
+          id={`bodyFat-${clientId}`}
+          name="bodyFat"
+          type="number"
+          step="0.1"
+          min="0"
+          placeholder="19.5"
+          className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm outline-none placeholder:text-slate-500 focus:border-brand-500"
+        />
+      </div>
+      <button
+        type="submit"
+        disabled={pending}
+        className="rounded-full bg-brand-500 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-brand-400 disabled:opacity-60"
+      >
+        {pending ? "Saving…" : "Log"}
+      </button>
+      {state?.error && (
+        <p role="alert" className="text-xs text-red-400 sm:self-center">
+          {state.error}
+        </p>
+      )}
+      {state?.ok && (
+        <p role="status" className="text-xs text-green-400 sm:self-center">
+          Saved.
+        </p>
+      )}
+    </form>
   );
 }

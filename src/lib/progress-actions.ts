@@ -43,3 +43,43 @@ export async function logWeight(
   revalidatePath("/dashboard/progress");
   return { ok: true };
 }
+
+export async function logClientMetric(
+  _prev: WeightLogState,
+  formData: FormData
+): Promise<WeightLogState> {
+  const clientId = String(formData.get("clientId") ?? "");
+  const wRaw = String(formData.get("weight") ?? "").trim();
+  const bfRaw = String(formData.get("bodyFat") ?? "").trim();
+  const weight = wRaw ? Number(wRaw) : null;
+  const bodyFat = bfRaw ? Number(bfRaw) : null;
+  if (!clientId) return { error: "Invalid request." };
+  if (
+    (weight == null || !Number.isFinite(weight) || weight <= 0) &&
+    (bodyFat == null || !Number.isFinite(bodyFat) || bodyFat < 0)
+  ) {
+    return { error: "Enter a weight or body-fat value." };
+  }
+
+  let supabase;
+  try {
+    supabase = await createClient();
+  } catch {
+    return { error: "Supabase not connected yet — entry not saved." };
+  }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You're signed out. Sign in again." };
+
+  // Coach-insert policy enforces ownership (coach_id = auth.uid()).
+  const { error } = await supabase.from("body_metrics").insert({
+    client_id: clientId,
+    ...(weight != null ? { weight } : {}),
+    ...(bodyFat != null ? { body_fat: bodyFat } : {}),
+  });
+  if (error) return { error: "Couldn't save. Try again." };
+
+  revalidatePath("/coach/progress");
+  return { ok: true };
+}
