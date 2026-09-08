@@ -47,10 +47,10 @@ const NAV: Record<Role, NavItem[]> = {
   ],
   coach: [
     { icon: LayoutDashboard, label: "Dashboard", path: "/coach" },
-    { icon: Users, label: "Clients", path: "/coach/clients", badge: 2 },
+    { icon: Users, label: "Clients", path: "/coach/clients" },
     { icon: CalendarDays, label: "Schedule", path: "/coach/schedule" },
     { icon: BookOpen, label: "Nutrition Plans", path: "/coach/nutrition" },
-    { icon: MessageSquareText, label: "Messages", path: "/coach/messages", badge: 5 },
+    { icon: MessageSquareText, label: "Messages", path: "/coach/messages" },
     { icon: UserCheck, label: "Client Progress", path: "/coach/progress" },
     { icon: User, label: "My Profile", path: "/coach/profile" },
     { icon: Settings, label: "Settings", path: "/coach/settings" },

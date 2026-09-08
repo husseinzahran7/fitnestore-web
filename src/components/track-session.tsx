@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { saveWorkout } from "@/lib/tracking-actions";
 import type { TrackExercise, TrackHistory } from "@/lib/tracking";
 
@@ -198,6 +198,7 @@ export default function TrackSession({
       >
         {pending ? "Saving…" : "Finish workout"}
       </button>
+      <RestTimer />
       {result.error && (
         <p role="alert" className="mt-3 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-400">
           {result.error}
@@ -225,6 +226,85 @@ export default function TrackSession({
           </ul>
         </div>
       )}
+    </div>
+  );
+}
+
+const PRESETS = [30, 60, 90, 120, 180];
+
+function fmt(total: number) {
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function RestTimer() {
+  const [seconds, setSeconds] = useState(90);
+  const [left, setLeft] = useState<number | null>(null);
+  const endRef = useRef<number>(0);
+
+  const running = left != null && left > 0;
+
+  useEffect(() => {
+    if (!running) return;
+    const t = setInterval(
+      () => setLeft(Math.max(0, Math.round((endRef.current - Date.now()) / 1000))),
+      250
+    );
+    return () => clearInterval(t);
+  }, [running]);
+
+  const start = (s: number) => {
+    setSeconds(s);
+    endRef.current = Date.now() + s * 1000;
+    setLeft(s);
+  };
+
+  return (
+    <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-bold">Rest timer</span>
+        <span
+          className={`font-mono text-2xl font-extrabold tabular-nums ${
+            left === 0 ? "text-green-400" : "text-white"
+          }`}
+        >
+          {left == null ? fmt(seconds) : fmt(left)}
+        </span>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {PRESETS.map((p) => (
+          <button
+            key={p}
+            type="button"
+            onClick={() => start(p)}
+            className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors ${
+              seconds === p && left != null
+                ? "bg-brand-500 text-white"
+                : "bg-white/10 text-slate-300 hover:bg-white/20"
+            }`}
+          >
+            {p >= 60 ? `${p / 60}m` : `${p}s`}
+          </button>
+        ))}
+        {left != null && left > 0 ? (
+          <button
+            type="button"
+            onClick={() => setLeft(null)}
+            className="rounded-full px-3.5 py-1.5 text-xs font-bold text-slate-400 hover:text-white"
+          >
+            Reset
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => start(seconds)}
+            className="rounded-full bg-brand-500/20 px-3.5 py-1.5 text-xs font-bold text-brand-400 hover:bg-brand-500/30"
+          >
+            {left === 0 ? "Again" : "Start"}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
