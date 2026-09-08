@@ -37,13 +37,13 @@ export default function SiteHeader() {
 
         <div className="hidden items-center gap-3 md:flex">
           <a
-            href="#pricing"
+            href="/login"
             className="text-sm font-medium text-slate-300 transition-colors hover:text-white"
           >
             Sign in
           </a>
           <motion.a
-            href="#cta"
+            href="/register"
             whileHover={{ scale: 1.04 }}
             whileTap={{ scale: 0.97 }}
             className="inline-flex items-center gap-1.5 rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-500/30 transition-colors hover:bg-brand-400"
@@ -82,7 +82,7 @@ export default function SiteHeader() {
                 </a>
               ))}
               <a
-                href="#cta"
+                href="/register"
                 onClick={() => setOpen(false)}
                 className="mt-2 flex items-center justify-center gap-1.5 rounded-full bg-brand-500 px-5 py-3 text-sm font-semibold text-white"
               >

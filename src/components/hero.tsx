@@ -68,7 +68,7 @@ export default function Hero() {
           </motion.p>
           <motion.div variants={item} className="mt-8 flex flex-col gap-3 sm:flex-row">
             <motion.a
-              href="#cta"
+              href="/register"
               whileHover={{ scale: 1.04 }}
               whileTap={{ scale: 0.97 }}
               className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-500 px-7 py-3.5 text-base font-semibold text-white shadow-xl shadow-brand-500/30 transition-colors hover:bg-brand-400"

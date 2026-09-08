@@ -232,7 +232,7 @@ export default function Home() {
                     ))}
                   </ul>
                   <a
-                    href="#cta"
+                    href="/register"
                     className={`mt-6 flex items-center justify-center gap-1.5 rounded-full py-3 text-sm font-semibold transition-all ${
                       t.hot
                         ? "bg-brand-500 text-white hover:bg-brand-400"
@@ -264,7 +264,7 @@ export default function Home() {
                 start, installable in seconds.
               </p>
               <a
-                href="#top"
+                href="/register"
                 className="relative mt-8 inline-flex items-center gap-2 rounded-full bg-brand-500 px-8 py-3.5 font-semibold text-white shadow-xl shadow-brand-500/30 transition-all hover:scale-105 hover:bg-brand-400"
               >
                 Get started free
