@@ -25,7 +25,9 @@ import {
 } from "lucide-react";
 import type { Role } from "@/lib/role-home";
 import type { Viewer } from "@/lib/supabase/server";
+import type { Dict, Locale } from "@/lib/locale";
 import BellButton from "@/components/bell-button";
+import LocaleToggle from "@/components/locale-toggle";
 
 function cx(...parts: Array<string | false | undefined>) {
   return parts.filter(Boolean).join(" ");
@@ -38,32 +40,32 @@ interface NavItem {
   badge?: number;
 }
 
-const NAV: Record<Role, NavItem[]> = {
+const buildNav = (t: Dict["nav"]): Record<Role, NavItem[]> => ({
   user: [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-    { icon: CalendarDays, label: "Schedule", path: "/dashboard/schedule" },
-    { icon: Apple, label: "Nutrition", path: "/dashboard/nutrition" },
-    { icon: BarChart3, label: "Progress", path: "/dashboard/progress" },
-    { icon: MessageSquareText, label: "Messages", path: "/dashboard/messages" },
-    { icon: Settings, label: "Settings", path: "/dashboard/settings" },
+    { icon: LayoutDashboard, label: t.dashboard, path: "/dashboard" },
+    { icon: CalendarDays, label: t.schedule, path: "/dashboard/schedule" },
+    { icon: Apple, label: t.nutrition, path: "/dashboard/nutrition" },
+    { icon: BarChart3, label: t.progress, path: "/dashboard/progress" },
+    { icon: MessageSquareText, label: t.messages, path: "/dashboard/messages" },
+    { icon: Settings, label: t.settings, path: "/dashboard/settings" },
   ],
   coach: [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/coach" },
-    { icon: Users, label: "Clients", path: "/coach/clients" },
-    { icon: CalendarDays, label: "Schedule", path: "/coach/schedule" },
-    { icon: BookOpen, label: "Nutrition Plans", path: "/coach/nutrition" },
-    { icon: MessageSquareText, label: "Messages", path: "/coach/messages" },
-    { icon: UserCheck, label: "Client Progress", path: "/coach/progress" },
-    { icon: User, label: "My Profile", path: "/coach/profile" },
-    { icon: Settings, label: "Settings", path: "/coach/settings" },
+    { icon: LayoutDashboard, label: t.dashboard, path: "/coach" },
+    { icon: Users, label: t.clients, path: "/coach/clients" },
+    { icon: CalendarDays, label: t.schedule, path: "/coach/schedule" },
+    { icon: BookOpen, label: t.nutrition, path: "/coach/nutrition" },
+    { icon: MessageSquareText, label: t.messages, path: "/coach/messages" },
+    { icon: UserCheck, label: t.clientProgress, path: "/coach/progress" },
+    { icon: User, label: t.myProfile, path: "/coach/profile" },
+    { icon: Settings, label: t.settings, path: "/coach/settings" },
   ],
   admin: [
-    { icon: LayoutDashboard, label: "Dashboard", path: "/admin" },
-    { icon: Users, label: "Coaches", path: "/admin/coaches" },
-    { icon: FileText, label: "Policies", path: "/admin/policies" },
-    { icon: Settings, label: "Settings", path: "/admin/settings" },
+    { icon: LayoutDashboard, label: t.dashboard, path: "/admin" },
+    { icon: Users, label: t.coaches, path: "/admin/coaches" },
+    { icon: FileText, label: t.policies, path: "/admin/policies" },
+    { icon: Settings, label: t.settings, path: "/admin/settings" },
   ],
-};
+});
 
 const PILL: Record<Role, string | null> = {
   user: null,
@@ -80,17 +82,21 @@ const SUBTITLE: Record<Role, (v: Viewer) => string> = {
 export default function DashboardShell({
   role,
   viewer,
+  t,
+  locale,
   children,
 }: {
   role: Role;
   viewer: Viewer;
+  t: Dict;
+  locale: Locale;
   children: React.ReactNode;
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const pathname = usePathname();
-  const nav = NAV[role];
+  const nav = buildNav(t.nav)[role];
   const utility = role !== "user";
   const ProfileIcon = role === "admin" ? Shield : User;
 
@@ -148,15 +154,18 @@ export default function DashboardShell({
               </div>
             </div>
           </div>
-          <form action="/auth/signout" method="post">
-            <button
-              type="submit"
-              className="mt-3 flex w-full items-center rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-white/10"
-            >
-              <LogOut size={16} className="mr-2" />
-              Logout
-            </button>
-          </form>
+          <div className="mt-3 flex items-center gap-2">
+            <form action="/auth/signout" method="post" className="flex-1">
+              <button
+                type="submit"
+                className="flex w-full items-center rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-white/10"
+              >
+                <LogOut size={16} className="mr-2" />
+                {t.auth.signOut}
+              </button>
+            </form>
+            <LocaleToggle current={locale} />
+          </div>
         </>
       ) : (
         <div className="flex flex-col items-center gap-2">
@@ -292,8 +301,10 @@ export default function DashboardShell({
               GYM<span className="text-brand-500">ers</span>
             </span>
           </div>
+          <LocaleToggle current={locale} />
           {utility && (
             <div className="flex shrink-0 items-center gap-1">
+              <LocaleToggle current={locale} />
               <BellButton />
               <button
                 aria-label="Search"
@@ -318,6 +329,7 @@ export default function DashboardShell({
 
         {utility && (
           <header className="hidden items-center justify-end gap-2 border-b border-white/10 bg-ink-950 px-6 py-3 md:flex">
+            <LocaleToggle current={locale} />
             <BellButton />
             <input
               placeholder="Search…"

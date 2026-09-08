@@ -51,3 +51,8 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-brand-600);
 }
+
+[dir="rtl"] body {
+  font-family: var(--font-arabic), var(--font-sans);
+  letter-spacing: 0 !important;
+}
