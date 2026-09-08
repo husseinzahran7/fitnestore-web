@@ -48,9 +48,18 @@ export default async function CoachProfilePage({
           ← All coaches
         </Link>
         <div className="mt-4 flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-500/15 text-2xl font-bold text-brand-400">
-            {coach.name.charAt(0)}
-          </div>
+          {coach.avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={coach.avatarUrl}
+              alt=""
+              className="h-16 w-16 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-brand-500/15 text-2xl font-bold text-brand-400">
+              {coach.name.charAt(0)}
+            </div>
+          )}
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight">{coach.name}</h1>
             <p className="mt-1 text-sm text-slate-400">

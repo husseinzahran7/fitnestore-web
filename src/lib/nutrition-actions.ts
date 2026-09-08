@@ -5,6 +5,76 @@ import { createClient } from "@/lib/supabase/server";
 
 export type MealState = { error?: string; ok?: boolean };
 
+export async function assignTemplate(
+  _prev: MealState,
+  formData: FormData
+): Promise<MealState> {
+  const templateId = String(formData.get("templateId") ?? "");
+  const clientId = String(formData.get("clientId") ?? "");
+  if (!templateId || !clientId) return { error: "Invalid request." };
+
+  let supabase;
+  try {
+    supabase = await createClient();
+  } catch {
+    return { error: "Supabase not connected yet." };
+  }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You're signed out. Sign in again." };
+
+  // Template must be a live template row (RLS read covers visibility).
+  const { data: template } = await supabase
+    .from("nutrition_plans")
+    .select("id, title, description, tags")
+    .eq("id", templateId)
+    .eq("is_template", true)
+    .single();
+  if (!template) return { error: "Template not found." };
+
+  // Client must belong to this coach (or caller is admin).
+  const { data: client } = await supabase
+    .from("clients")
+    .select("id, coach_id")
+    .eq("id", clientId)
+    .single();
+  if (!client) return { error: "Client not found." };
+
+  const { data: plan, error: planError } = await supabase
+    .from("nutrition_plans")
+    .insert({
+      coach_id: user.id,
+      title: `${template.title} — assigned`,
+      description: template.description,
+      tags: template.tags,
+      is_template: false,
+    })
+    .select("id")
+    .single();
+  if (planError || !plan) return { error: "Couldn't assign. Try again." };
+
+  const { data: meals } = await supabase
+    .from("meals")
+    .select("name, day, details")
+    .eq("plan_id", templateId);
+  if (meals && meals.length > 0) {
+    const { error: mealsError } = await supabase.from("meals").insert(
+      meals.map((m) => ({
+        plan_id: plan.id,
+        client_id: clientId,
+        name: m.name,
+        day: m.day,
+        details: m.details,
+      }))
+    );
+    if (mealsError) return { error: "Plan created, meals failed. Try again." };
+  }
+
+  revalidatePath("/coach/nutrition");
+  return { ok: true };
+}
+
 export async function logMeal(
   _prev: MealState,
   formData: FormData

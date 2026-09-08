@@ -68,9 +68,19 @@ export default function CoachBrowser({ coaches }: { coaches: CoachCard[] }) {
               className="rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition-all hover:-translate-y-1 hover:border-brand-500/50"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-base font-bold text-brand-400">
-                  {c.name.charAt(0)}
-                </div>
+                {c.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={c.avatarUrl}
+                    alt=""
+                    className="h-12 w-12 shrink-0 rounded-full object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-500/15 text-base font-bold text-brand-400">
+                    {c.name.charAt(0)}
+                  </div>
+                )}
                 <div className="min-w-0">
                   <div className="truncate font-bold">{c.name}</div>
                   <div className="text-xs text-slate-400">

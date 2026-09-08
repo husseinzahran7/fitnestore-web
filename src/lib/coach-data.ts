@@ -10,6 +10,7 @@ export const SPECIALTIES = [
 export interface CoachCard {
   id: string;
   name: string;
+  avatarUrl: string;
   bio: string;
   specialties: string[];
   specialtiesOther: string;

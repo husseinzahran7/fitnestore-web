@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   BarChart3,
-  BellRing,
   BookOpen,
   CalendarDays,
   ChevronsLeft,
@@ -25,6 +24,7 @@ import {
 } from "lucide-react";
 import type { Role } from "@/lib/role-home";
 import type { Viewer } from "@/lib/supabase/server";
+import BellButton from "@/components/bell-button";
 
 function cx(...parts: Array<string | false | undefined>) {
   return parts.filter(Boolean).join(" ");
@@ -292,12 +292,7 @@ export default function DashboardShell({
           </div>
           {utility && (
             <div className="flex shrink-0 items-center gap-1">
-              <button aria-label="Notifications" className="relative rounded-lg p-2 hover:bg-white/10">
-                <BellRing size={20} />
-                <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">
-                  3
-                </span>
-              </button>
+              <BellButton />
               <button
                 aria-label="Search"
                 onClick={() => setSearchOpen(!searchOpen)}
@@ -321,12 +316,7 @@ export default function DashboardShell({
 
         {utility && (
           <header className="hidden items-center justify-end gap-2 border-b border-white/10 bg-ink-950 px-6 py-3 md:flex">
-            <button aria-label="Notifications" className="relative mr-2 rounded-lg p-2 hover:bg-white/10">
-              <BellRing size={20} />
-              <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">
-                3
-              </span>
-            </button>
+            <BellButton />
             <input
               placeholder="Search…"
               aria-label="Search"

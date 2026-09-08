@@ -1,5 +1,6 @@
 import NutritionBoards from "@/components/nutrition-boards";
 import MealLogForm from "@/components/meal-log-form";
+import AssignTemplateForm from "@/components/assign-template-form";
 import {
   mockClientMealPlans,
   mockNutritionPlans,
@@ -33,6 +34,9 @@ export default async function CoachNutritionPage() {
       </div>
       {live && templates.length > 0 && clients.length > 0 && (
         <MealLogForm plans={templates} clients={clients} />
+      )}
+      {live && templates.length > 0 && clients.length > 0 && (
+        <AssignTemplateForm templates={templates} clients={clients} />
       )}
     </div>
   );

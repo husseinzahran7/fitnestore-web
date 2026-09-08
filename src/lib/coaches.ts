@@ -12,7 +12,7 @@ export async function listCoaches(): Promise<CoachCard[]> {
     const { data, error } = await supabase
       .from("coach_profiles")
       .select(
-        "profile_id, display_name, bio, specialties, specialties_other, years_experience, certifications, offers_free_consult, whatsapp"
+        "profile_id, display_name, avatar_path, bio, specialties, specialties_other, years_experience, certifications, offers_free_consult, whatsapp"
       )
       .eq("approved", true)
       .order("created_at", { ascending: false });
@@ -21,6 +21,7 @@ export async function listCoaches(): Promise<CoachCard[]> {
     return data.map((c) => ({
       id: c.profile_id,
       name: String(c.display_name ?? "Coach"),
+      avatarUrl: publicAvatarUrl(supabase, String(c.avatar_path ?? "")),
       bio: String(c.bio ?? ""),
       specialties: (c.specialties as string[] | null) ?? [],
       specialtiesOther: String(c.specialties_other ?? ""),
@@ -32,6 +33,15 @@ export async function listCoaches(): Promise<CoachCard[]> {
   } catch {
     return [];
   }
+}
+
+function publicAvatarUrl(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  path: string
+): string {
+  if (!path) return "";
+  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+  return data.publicUrl;
 }
 
 export async function getCoach(id: string): Promise<CoachDetail | null> {
@@ -202,6 +212,7 @@ export async function decideConsult(
 
 export interface MyCoachProfile {
   displayName: string;
+  avatarUrl: string;
   bio: string;
   specialties: string[];
   specialtiesOther: string;
@@ -224,8 +235,13 @@ export async function getMyCoachProfile(): Promise<MyCoachProfile | null> {
       supabase.from("profiles").select("name").eq("id", user.id).single(),
       supabase.from("coach_profiles").select("*").eq("profile_id", user.id).single(),
     ]);
+    const avatarPath = String(row?.avatar_path ?? "");
+    const avatarUrl = avatarPath
+      ? supabase.storage.from("avatars").getPublicUrl(avatarPath).data.publicUrl
+      : "";
     return {
       displayName: String(row?.display_name ?? profile?.name ?? ""),
+      avatarUrl,
       bio: String(row?.bio ?? ""),
       specialties: (row?.specialties as string[] | null) ?? [],
       specialtiesOther: String(row?.specialties_other ?? ""),
@@ -242,6 +258,50 @@ export async function getMyCoachProfile(): Promise<MyCoachProfile | null> {
 }
 
 export type ProfileState = { error?: string; ok?: boolean };
+
+const ALLOWED_AVATARS = ["image/jpeg", "image/png", "image/webp"];
+
+export async function uploadAvatar(
+  _prev: ProfileState,
+  formData: FormData
+): Promise<ProfileState> {
+  const file = formData.get("avatar");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Choose a photo first." };
+  }
+  if (!ALLOWED_AVATARS.includes(file.type)) {
+    return { error: "JPEG, PNG, or WebP only." };
+  }
+  if (file.size > 2 * 1024 * 1024) return { error: "Max 2 MB." };
+
+  let supabase;
+  try {
+    supabase = await createClient();
+  } catch {
+    return { error: "Supabase not connected yet." };
+  }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You're signed out. Sign in again." };
+
+  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+  const path = `${user.id}/avatar.${ext}`;
+  const { error: upError } = await supabase.storage
+    .from("avatars")
+    .upload(path, file, { contentType: file.type, upsert: true });
+  if (upError) return { error: "Couldn't upload. Try again." };
+
+  const { error: dbError } = await supabase.from("coach_profiles").upsert(
+    { profile_id: user.id, avatar_path: path },
+    { onConflict: "profile_id" }
+  );
+  if (dbError) return { error: "Photo saved, profile link failed." };
+
+  revalidatePath("/coaches");
+  revalidatePath("/coach/profile");
+  return { ok: true };
+}
 
 export async function saveCoachProfile(
   _prev: ProfileState,

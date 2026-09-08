@@ -1,4 +1,5 @@
 import CoachProfileForm from "@/components/coach-profile-form";
+import AvatarForm from "@/components/avatar-form";
 import { getMyCoachProfile } from "@/lib/coaches";
 
 export default async function CoachProfilePage() {
@@ -34,7 +35,8 @@ export default async function CoachProfilePage() {
           </span>
         )}
       </p>
-      <div className="mt-6">
+      <div className="mt-6 space-y-5">
+        <AvatarForm currentUrl={profile.avatarUrl} />
         <CoachProfileForm initial={profile} />
       </div>
     </div>
