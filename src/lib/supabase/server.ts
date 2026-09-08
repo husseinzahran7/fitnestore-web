@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import type { Role } from "@/lib/role-home";
@@ -44,8 +45,9 @@ export interface Viewer {
   membership?: string;
 }
 
-/** Session + profile, or null when signed out / unconfigured. Never throws. */
-export async function getViewer(): Promise<Viewer | null> {
+/** Session + profile, or null when signed out / unconfigured. Never throws.
+ * Cached per request — layouts + pages + queries share one auth call. */
+export const getViewer: () => Promise<Viewer | null> = cache(async () => {
   try {
     const supabase = await createClient();
     const {
@@ -74,4 +76,4 @@ export async function getViewer(): Promise<Viewer | null> {
   } catch {
     return null;
   }
-}
+});
