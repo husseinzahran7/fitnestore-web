@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import GoogleButton from "@/components/google-button";
 import { signup, type AuthState } from "../login/actions";
 
 const initial: AuthState = {};
@@ -96,6 +97,13 @@ export default function RegisterPage() {
             Sign in
           </a>
         </p>
+
+        <div className="my-5 flex items-center gap-3 text-xs text-slate-500">
+          <span className="h-px flex-1 bg-white/10" />
+          or
+          <span className="h-px flex-1 bg-white/10" />
+        </div>
+        <GoogleButton label="Sign up with Google" />
       </div>
     </div>
   );

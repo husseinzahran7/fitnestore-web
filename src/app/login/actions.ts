@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
@@ -72,4 +73,22 @@ export async function signup(
     .insert({ id: data.user.id, role: "user", name });
   revalidatePath("/", "layout");
   redirect("/dashboard");
+}
+
+export async function signInWithGoogle(): Promise<AuthState> {
+  let supabase;
+  try {
+    supabase = await createClient();
+  } catch {
+    return { error: "Supabase not connected yet." };
+  }
+  const origin = (await headers()).get("origin") ?? "";
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: `${origin}/auth/callback` },
+  });
+  if (error || !data.url) {
+    return { error: "Google sign-in is not enabled yet." };
+  }
+  redirect(data.url);
 }
