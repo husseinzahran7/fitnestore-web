@@ -1,8 +1,8 @@
 # GYMers — Ready for Workflow Testing
 
-Verified live 2026-09-08 via Playwright against local dev + Supabase project
-`rucibulzpxzunqezlhby`. Build green, zero console errors on every page,
-no horizontal scroll at 390px (home, progress, messages).
+Verified live via Playwright against local dev + Supabase project
+`rucibulzpxzunqezlhby`. Build green, lint zero errors, zero console errors
+on every page, no horizontal scroll at 390px on all verified pages.
 
 ## Run it
 
@@ -10,57 +10,57 @@ no horizontal scroll at 390px (home, progress, messages).
 cd fitnestore-web
 cp .env.example .env.local   # fill NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 pnpm install
-pnpm dev --webpack           # dev script already pins --webpack; Turbopack crashes on the PWA config
+pnpm dev                     # --webpack pinned; Turbopack crashes on PWA config
 ```
 
-## Test accounts (password `Test1234!`)
+Stop it: `Ctrl+C`. Port busy? `Get-Process node | Stop-Process`.
+
+## Test accounts (password `Test1234!`, Fill buttons on login page)
 
 | Email | Role | Proves |
 |---|---|---|
-| `gymers.test.user@gmail.com` | user | dashboard, schedule, progress, messages, settings |
-| `gymers.test.coach@gmail.com` | coach | roster + toggle, templates, progress, messages |
-| `gymers.test.admin@gmail.com` | admin | policies, settings |
+| `gymers.test.user@gmail.com` | user | dashboard, schedule + tracking, nutrition, progress, messages, settings |
+| `gymers.test.coach@gmail.com` | coach | roster + toggle + logs, schedule, nutrition, progress, profile, inbox |
+| `gymers.test.admin@gmail.com` | admin | coaches approvals, policies, settings |
 
 ## Live vs mock matrix
 
 | Surface | State |
 |---|---|
-| Auth + role routing + guards | LIVE (all 3 roles, signed-out → login?next, cross-role bounce) |
-| Coach clients list + activate/deactivate | LIVE, persisted both ways |
-| User schedule | LIVE (seeded session) |
-| Nutrition templates | LIVE (2 seeded rows, honest usage counts) |
-| Messages list + send | LIVE (round-trip persisted) |
-| User progress weight/strength/measure | LIVE (seeded 4 weeks) |
-| Weight logging | LIVE (writes body_metrics as owner) |
-| Settings name ×3 roles | LIVE (persisted) |
-| Admin policies + public policy pages | LIVE (3 seeded rows, anon-readable) |
-| Coach meal logging (plan + client + details, honest usage counts) | LIVE |
-| Coach schedule appointments | MOCK — proposal at `fitnestore-hub/docs/PROPOSAL_0004_APPOINTMENTS.md`, tables not applied yet |
-| Coach profile editor (bio, specialties + free text, certs, WhatsApp, free toggle) | LIVE |
-| Admin approval queue (approve/unlist, directory hides/shows) | LIVE |
-| Workout tracking (start mode, set logs, warmup, reorder, prefill, history) | LIVE |
-| Coach discovery (browse, profiles, WhatsApp, consult request + accept) | LIVE (approved-only directory, anon-readable) |
-| Client meal plans | MOCK — meals rows lack dates/status/adherence columns |
-| Check-ins | EMPTY — no backend table; board renders honestly empty |
-| Progress photos | LIVE (upload JPEG/PNG/WebP ≤5MB, private bucket + signed URLs) |
+| Auth + role routing + guards + ?next= return | LIVE, all 3 roles |
+| Auth-aware landing header (Open app vs Sign in) | LIVE |
+| Google OAuth code | LIVE code, provider switch = human dashboard job |
+| Coach clients + activate/deactivate + Logs view | LIVE, persisted |
+| Start-workout mode (sets, warmup, reorder, prefill, history, rest timer) | LIVE |
+| User schedule + coach appointments + .ics + Done/Cancel | LIVE |
+| Nutrition templates + assign + meal log + food library + ingredients | LIVE |
+| Client meals (totals, check + comment, extras, water) + coach day overview | LIVE |
+| Messages + send + consult request/accept/decline inbox | LIVE, two-way proven |
+| User progress + weight log + photos + check-ins; coach metrics + board | LIVE |
+| Coach discovery (browse, profiles, WhatsApp, free/paid badges) | LIVE, approved-only |
+| Coach profile editor + admin approval queue | LIVE |
+| Arabic (RTL shell, nav, user pages; toggle everywhere) | LIVE foundation |
+| Notifications bell (requests/approvals counts) | LIVE |
+| Admin policies + public pages | LIVE, anon-readable |
+| Client meal plans board | MOCK — rows lack dates/status/adherence columns |
+| Check-ins | LIVE (table 0018, both sides) |
 
-## Schema notes (deviations from locked 0001 found by testing)
+## Schema (hub `supabase/migrations/`, mirrors prod)
 
-- Fresh-DB apply order is tables → function → policies (SQL function bodies
-  validate at creation). Hub folder mirrors prod: `0001` (note added),
-  `0002_init_policies.sql`, `0003_profiles_self_insert.sql`,
-  `0004_profiles_self_update.sql`, `0005_body_metrics_owner_insert.sql`.
-- 0003–0005 close real gaps the app code already assumed: first-login
-  profile insert, self name update, owner weight logging. Without them the
-  UI reports success while RLS drops the write.
+0001 (+order note), 0002 policies, 0003 self-insert, 0004 self-update,
+0005 metrics owner-insert, 0006 tracking+coach_profiles, 0007 reorder,
+0008→0013 consult flow (recursion lessons inside), 0014–0015 avatars,
+0016 food library, 0017 appointments, 0018 check-ins, 0019 food_logs+drink.
 
 ## Human tasks left
 
-1. Deploy preview (Vercel: import repo, set the two `NEXT_PUBLIC_` env vars,
-   `pnpm build --webpack` is already the build command).
-2. Real-phone QA: Add to Home Screen, standalone open, touch targets,
-   safe-area on the three 390px-verified pages and the rest.
-3. Approve/reject `PROPOSAL_0004_APPOINTMENTS.md` (3 open questions inside).
-4. `fitnestore-hub/` has pre-existing uncommitted work (predates this
-   effort) — review + commit separately. `fitnestore-web/` is not a git repo;
-   init + first commit when ready.
+1. Deploy preview (Vercel import + 2 env vars + redirect URL).
+2. Google provider switch (ID/secret + redirect).
+3. Real-phone QA + subscription provider decision.
+4. `fitnestore-hub/` pre-existing uncommitted work — review separately.
+
+## Docs
+
+- `CHANGELOG.md` — what shipped, by area.
+- `HUMAN_TODO.md` — your checklist.
+- `graphify-out/` — knowledge graph (gitignored, post-commit hook rebuilds).
