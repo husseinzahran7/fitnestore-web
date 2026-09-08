@@ -38,6 +38,7 @@ export default function MessageThread({
     setActiveId(id);
   };
 
+  /* eslint-disable react-hooks/purity -- send is an event handler; ids and timestamps must be fresh per tap */
   const send = async () => {
     const text = draft.trim();
     if (!text || !active || sending) return;
@@ -51,13 +52,14 @@ export default function MessageThread({
         return;
       }
     }
+    const now = Date.now();
     const msg = {
-      id: `local-${Date.now()}`,
+      id: `local-${now}`,
       senderId: "me",
       senderName: "You",
       senderRole: me,
       content: text,
-      timestamp: new Date(),
+      timestamp: new Date(now),
       isRead: true,
     };
     setList((prev) =>
@@ -74,6 +76,7 @@ export default function MessageThread({
     );
     setDraft("");
   };
+  /* eslint-enable react-hooks/purity */
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-3">

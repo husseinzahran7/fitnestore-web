@@ -155,7 +155,7 @@ export async function getTrackSession(sessionId: string): Promise<{
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
-    let prefill = new Map<string, TrackExercise["prefill"]>();
+    const prefill = new Map<string, TrackExercise["prefill"]>();
     if (lastLog) {
       const { data: lastSets } = await supabase
         .from("set_logs")

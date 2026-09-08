@@ -256,6 +256,7 @@ function RestTimer() {
 
   const start = (s: number) => {
     setSeconds(s);
+    // eslint-disable-next-line react-hooks/purity -- event handler, not render
     endRef.current = Date.now() + s * 1000;
     setLeft(s);
   };

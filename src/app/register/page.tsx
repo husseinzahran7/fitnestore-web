@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
 import GoogleButton from "@/components/google-button";
 import { signup, type AuthState } from "../login/actions";
 
@@ -12,12 +13,12 @@ export default function RegisterPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-ink-950 px-4">
       <div className="w-full max-w-sm rounded-3xl border border-white/10 bg-white/[0.03] p-8">
-        <a href="/" className="flex items-center gap-2">
+        <Link href="/" className="flex items-center gap-2">
           <img src="/logo.svg" alt="GYMers logo" className="h-8 w-8" />
           <span className="text-lg font-extrabold">
             GYM<span className="text-brand-500">ers</span>
           </span>
-        </a>
+        </Link>
         <h1 className="mt-6 text-2xl font-extrabold">Create your account</h1>
         <p className="mt-1 text-sm text-slate-400">
           Free to start. Your plan lives here.
