@@ -60,7 +60,7 @@ export default async function CoachClientsPage() {
         </div>
       </div>
       <div className="mt-6">
-        <ClientsTable clients={clients} live={live} />
+        <ClientsTable clients={clients} live={live} logsBase="/coach/clients" />
       </div>
     </div>
   );

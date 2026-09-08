@@ -17,9 +17,11 @@ function initials(name: string) {
 export default function ClientsTable({
   clients,
   live = false,
+  logsBase,
 }: {
   clients: Client[];
   live?: boolean;
+  logsBase?: string;
 }) {
   const [query, setQuery] = useState("");
 
@@ -101,6 +103,14 @@ export default function ClientsTable({
                   currentStatus={c.status ?? (c.isActive ? "active" : "cancelled")}
                   live={live}
                 />
+                {logsBase && (
+                  <a
+                    href={`${logsBase}/${c.id}/logs`}
+                    className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-300 transition-colors hover:bg-white/20 hover:text-white"
+                  >
+                    Logs
+                  </a>
+                )}
               </div>
             </li>
           ))}

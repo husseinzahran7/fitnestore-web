@@ -15,6 +15,100 @@ export interface TrackHistory {
   setCount: number;
 }
 
+export interface CoachLogView {
+  id: string;
+  title: string;
+  performedOn: string;
+  sets: Array<{
+    exercise: string;
+    setNo: number;
+    warmup: boolean;
+    weight: string;
+    reps: string;
+  }>;
+}
+
+export async function getClientLogs(clientId: string): Promise<{
+  clientName: string;
+  logs: CoachLogView[];
+  live: boolean;
+}> {
+  const fallback = { clientName: "", logs: [], live: false };
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return fallback;
+
+    // Ownership enforced again here; RLS is the real gate.
+    const { data: client } = await supabase
+      .from("clients")
+      .select("id, profile_id")
+      .eq("id", clientId)
+      .eq("coach_id", user.id)
+      .single();
+    if (!client) return fallback;
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("name")
+      .eq("id", client.profile_id)
+      .single();
+
+    const { data: logs } = await supabase
+      .from("workout_logs")
+      .select("id, title, performed_on")
+      .eq("client_id", clientId)
+      .order("performed_on", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(20);
+    if (!logs || logs.length === 0) {
+      return {
+        clientName: (profile?.name as string) ?? "Client",
+        logs: [],
+        live: true,
+      };
+    }
+
+    const { data: sets } = await supabase
+      .from("set_logs")
+      .select("log_id, exercise_id, set_no, is_warmup, weight, reps")
+      .in(
+        "log_id",
+        logs.map((l) => l.id)
+      )
+      .order("set_no", { ascending: true });
+
+    const exIds = [...new Set((sets ?? []).map((s) => s.exercise_id))];
+    const { data: exercises } = exIds.length
+      ? await supabase.from("exercises").select("id, name").in("id", exIds)
+      : { data: [] };
+    const names = new Map((exercises ?? []).map((e) => [e.id, e.name]));
+
+    return {
+      clientName: (profile?.name as string) ?? "Client",
+      logs: logs.map((l) => ({
+        id: l.id,
+        title: l.title,
+        performedOn: String(l.performed_on),
+        sets: (sets ?? [])
+          .filter((s) => s.log_id === l.id)
+          .map((s) => ({
+            exercise: (names.get(s.exercise_id) as string) ?? "Exercise",
+            setNo: s.set_no,
+            warmup: !!s.is_warmup,
+            weight: s.weight != null ? String(s.weight) : "—",
+            reps: s.reps != null ? String(s.reps) : "—",
+          })),
+      })),
+      live: true,
+    };
+  } catch {
+    return fallback;
+  }
+}
+
 export async function getTrackSession(sessionId: string): Promise<{
   title: string;
   exercises: TrackExercise[];
