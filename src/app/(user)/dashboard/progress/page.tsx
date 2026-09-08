@@ -23,6 +23,7 @@ export default async function UserProgressPage() {
           strength={live ? data.strength : userStrengthProgress}
           measurements={live ? data.measurements : userBodyMeasurements}
           photos={live ? data.photos : userProgressPhotos}
+          photosLive={data.photosLive}
           live={live}
         />
       </div>

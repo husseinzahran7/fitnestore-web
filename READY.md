@@ -37,7 +37,7 @@ pnpm dev --webpack           # dev script already pins --webpack; Turbopack cras
 | Coach schedule appointments | MOCK — no backend table; see `fitnestore-hub/docs/PROPOSAL_0004_APPOINTMENTS.md` |
 | Client meal plans | MOCK — meals rows lack dates/status/adherence columns |
 | Check-ins | EMPTY — no backend table; board renders honestly empty |
-| Progress photos | EMPTY — bucket exists, zero objects |
+| Progress photos | LIVE (upload JPEG/PNG/WebP ≤5MB, private bucket + signed URLs) |
 
 ## Schema notes (deviations from locked 0001 found by testing)
 

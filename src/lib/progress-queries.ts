@@ -27,6 +27,12 @@ export interface UserProgressData {
   measurements: MeasurementPoint[];
   // No backend photos yet (storage bucket exists, zero objects) — always [].
   photos: ProgressPhoto[];
+  photosLive: LivePhoto[];
+}
+
+export interface LivePhoto {
+  name: string;
+  url: string;
 }
 
 export async function getUserProgress(): Promise<{
@@ -38,6 +44,7 @@ export async function getUserProgress(): Promise<{
     strength: [],
     measurements: [],
     photos: [],
+    photosLive: [],
   };
   try {
     const supabase = await createClient();
@@ -93,9 +100,37 @@ export async function getUserProgress(): Promise<{
         r.squat != null && r.bench != null && r.deadlift != null
     );
 
-    return { data: { weight, strength, measurements, photos: [] }, live: true };
+    const photosLive = await listLivePhotos(supabase, user.id);
+    return { data: { weight, strength, measurements, photos: [], photosLive }, live: true };
   } catch {
     return { data: empty, live: false };
+  }
+}
+
+async function listLivePhotos(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string
+): Promise<LivePhoto[]> {
+  try {
+    const { data: files } = await supabase.storage
+      .from("progress_photos")
+      .list(userId, { limit: 24, sortBy: { column: "created_at", order: "desc" } });
+    if (!files || files.length === 0) return [];
+    const paths = files
+      .filter((f) => f.id != null)
+      .map((f) => `${userId}/${f.name}`);
+    if (paths.length === 0) return [];
+    const { data: signed } = await supabase.storage
+      .from("progress_photos")
+      .createSignedUrls(paths, 60 * 60 * 24 * 7);
+    return (signed ?? [])
+      .filter((s) => s.signedUrl && s.path)
+      .map((s) => ({
+        name: (s.path as string).split("/").pop() ?? (s.path as string),
+        url: s.signedUrl as string,
+      }));
+  } catch {
+    return [];
   }
 }
 

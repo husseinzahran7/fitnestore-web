@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { logWeight } from "@/lib/progress-actions";
+import { logWeight, uploadPhoto } from "@/lib/progress-actions";
+import type { LivePhoto } from "@/lib/progress-queries";
 import {
   CartesianGrid,
   Line,
@@ -36,12 +37,14 @@ export default function UserProgress({
   strength = userStrengthProgress,
   measurements = userBodyMeasurements,
   photos = userProgressPhotos,
+  photosLive = [],
   live = false,
 }: {
   weight?: WeightPoint[];
   strength?: StrengthPoint[];
   measurements?: MeasurementPoint[];
   photos?: ProgressPhoto[];
+  photosLive?: LivePhoto[];
   live?: boolean;
 } = {}) {
   const [tab, setTab] = useState<(typeof TABS)[number]>("weight");
@@ -121,6 +124,23 @@ export default function UserProgress({
       )}
 
       {tab === "photos" && (
+        <>
+          {live && <PhotoUploadForm />}
+          {live ? (
+            <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
+              {photosLive.length === 0 && (
+                <p className="col-span-full rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-sm text-slate-400">
+                  No photos yet.
+                </p>
+              )}
+              {photosLive.map((p) => (
+                <div key={p.url} className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={p.url} alt={p.name} className="aspect-[2/3] w-full object-cover" loading="lazy" />
+                </div>
+              ))}
+            </div>
+          ) : (
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {photos.length === 0 ? (
             <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-sm text-slate-400">
@@ -140,6 +160,8 @@ export default function UserProgress({
             ))
           )}
         </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -183,6 +205,48 @@ function WeightLogForm() {
       {state?.ok && (
         <p role="status" className="text-xs text-green-400 sm:self-center">
           Saved.
+        </p>
+      )}
+    </form>
+  );
+}
+
+function PhotoUploadForm() {
+  const [state, action, pending] = useActionState(uploadPhoto, {});
+
+  return (
+    <form
+      action={action}
+      className="mt-5 flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:flex-row sm:items-end"
+    >
+      <div className="flex-1">
+        <label htmlFor="photo" className="mb-1.5 block text-sm font-medium">
+          Upload progress photo (JPEG/PNG/WebP, max 5 MB)
+        </label>
+        <input
+          id="photo"
+          name="photo"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          required
+          className="w-full text-sm text-slate-300 file:mr-3 file:rounded-full file:border-0 file:bg-brand-500 file:px-4 file:py-2 file:text-sm file:font-bold file:text-white hover:file:bg-brand-400"
+        />
+      </div>
+      <button
+        type="submit"
+        disabled={pending}
+        className="rounded-full bg-brand-500 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-brand-400 disabled:opacity-60"
+      >
+        {pending ? "Uploading…" : "Upload"}
+      </button>
+      {state?.error && (
+        <p role="alert" className="text-xs text-red-400 sm:self-center">
+          {state.error}
+        </p>
+      )}
+      {state?.ok && (
+        <p role="status" className="text-xs text-green-400 sm:self-center">
+          Uploaded.
         </p>
       )}
     </form>

@@ -44,6 +44,46 @@ export async function logWeight(
   return { ok: true };
 }
 
+const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
+
+export async function uploadPhoto(
+  _prev: WeightLogState,
+  formData: FormData
+): Promise<WeightLogState> {
+  const file = formData.get("photo");
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Choose a photo first." };
+  }
+  if (!ALLOWED_PHOTO_TYPES.includes(file.type)) {
+    return { error: "JPEG, PNG, or WebP only." };
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    return { error: "Max 5 MB." };
+  }
+
+  let supabase;
+  try {
+    supabase = await createClient();
+  } catch {
+    return { error: "Supabase not connected yet — photo not saved." };
+  }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You're signed out. Sign in again." };
+
+  // Owner-full storage policy keys on folder <uid>/ — path must match.
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  const path = `${user.id}/${Date.now()}-${safeName}`;
+  const { error } = await supabase.storage
+    .from("progress_photos")
+    .upload(path, file, { contentType: file.type });
+  if (error) return { error: "Couldn't upload. Try again." };
+
+  revalidatePath("/dashboard/progress");
+  return { ok: true };
+}
+
 export async function logClientMetric(
   _prev: WeightLogState,
   formData: FormData
