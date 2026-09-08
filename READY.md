@@ -34,7 +34,8 @@ pnpm dev --webpack           # dev script already pins --webpack; Turbopack cras
 | Weight logging | LIVE (writes body_metrics as owner) |
 | Settings name ×3 roles | LIVE (persisted) |
 | Admin policies + public policy pages | LIVE (3 seeded rows, anon-readable) |
-| Coach schedule appointments | MOCK — no backend table; see `fitnestore-hub/docs/PROPOSAL_0004_APPOINTMENTS.md` |
+| Coach schedule appointments | MOCK — proposal at `fitnestore-hub/docs/PROPOSAL_0004_APPOINTMENTS.md`, tables not applied yet |
+| Coach discovery (browse, profiles, WhatsApp, consult request + accept) | LIVE (approved-only directory, anon-readable) |
 | Client meal plans | MOCK — meals rows lack dates/status/adherence columns |
 | Check-ins | EMPTY — no backend table; board renders honestly empty |
 | Progress photos | LIVE (upload JPEG/PNG/WebP ≤5MB, private bucket + signed URLs) |
