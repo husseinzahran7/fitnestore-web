@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Apple,
   BarChart3,
   BookOpen,
   CalendarDays,
@@ -41,6 +42,7 @@ const NAV: Record<Role, NavItem[]> = {
   user: [
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: CalendarDays, label: "Schedule", path: "/dashboard/schedule" },
+    { icon: Apple, label: "Nutrition", path: "/dashboard/nutrition" },
     { icon: BarChart3, label: "Progress", path: "/dashboard/progress" },
     { icon: MessageSquareText, label: "Messages", path: "/dashboard/messages" },
     { icon: Settings, label: "Settings", path: "/dashboard/settings" },

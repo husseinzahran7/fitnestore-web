@@ -1,6 +1,8 @@
 import NutritionBoards from "@/components/nutrition-boards";
 import MealLogForm from "@/components/meal-log-form";
 import AssignTemplateForm from "@/components/assign-template-form";
+import FoodLibrary from "@/components/food-library";
+import ClientDayOverview from "@/components/client-day-overview";
 import {
   mockClientMealPlans,
   mockNutritionPlans,
@@ -9,14 +11,18 @@ import {
   getCoachClients,
   getNutritionTemplates,
 } from "@/lib/nutrition-queries";
+import { listCoachMeals, listFoods, getCoachDayOverview } from "@/lib/foods";
 
 export default async function CoachNutritionPage() {
   // Templates read live; per-client plans stay mock — meals rows carry
   // name/day/details only, while the board shows dates/status/adherence
   // that have no backend columns. Wiring plans live would fabricate fields.
-  const [{ templates, live }, clients] = await Promise.all([
+  const [{ templates, live }, clients, foods, coachMeals, dayOverview] = await Promise.all([
     getNutritionTemplates(),
     getCoachClients(),
+    listFoods(),
+    listCoachMeals(),
+    getCoachDayOverview(),
   ]);
 
   return (
@@ -38,6 +44,8 @@ export default async function CoachNutritionPage() {
       {live && templates.length > 0 && clients.length > 0 && (
         <AssignTemplateForm templates={templates} clients={clients} />
       )}
+      {live && <FoodLibrary foods={foods} meals={coachMeals} />}
+      {live && <ClientDayOverview days={dayOverview} />}
     </div>
   );
 }
