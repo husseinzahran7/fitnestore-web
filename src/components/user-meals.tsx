@@ -1,7 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
-import { checkMeal, logWater, type MealWithFood } from "@/lib/foods";
+import { checkMeal, logWater, type ExtraLog, type FoodItem, type MealWithFood } from "@/lib/foods";
+import ExtrasForm from "@/components/extras-form";
 
 const input =
   "w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm outline-none placeholder:text-slate-500 focus:border-brand-500";
@@ -138,10 +139,14 @@ function WaterLogger({ waterMl }: { waterMl: number }) {
 
 export default function UserMeals({
   meals,
+  extras,
+  foods,
   waterMl,
   live,
 }: {
   meals: MealWithFood[];
+  extras: ExtraLog[];
+  foods: FoodItem[];
   waterMl: number;
   live: boolean;
 }) {
@@ -153,13 +158,13 @@ export default function UserMeals({
     );
   }
 
-  const day = meals.reduce(
+  const day = [...meals.map((m) => m.totals), ...extras].reduce(
     (t, m) => ({
-      calories: +(t.calories + m.totals.calories).toFixed(1),
-      protein: +(t.protein + m.totals.protein).toFixed(1),
-      carbs: +(t.carbs + m.totals.carbs).toFixed(1),
-      fat: +(t.fat + m.totals.fat).toFixed(1),
-      fiber: +(t.fiber + m.totals.fiber).toFixed(1),
+      calories: +(t.calories + m.calories).toFixed(1),
+      protein: +(t.protein + m.protein).toFixed(1),
+      carbs: +(t.carbs + m.carbs).toFixed(1),
+      fat: +(t.fat + m.fat).toFixed(1),
+      fiber: +(t.fiber + m.fiber).toFixed(1),
     }),
     { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
   );
@@ -180,6 +185,24 @@ export default function UserMeals({
       </div>
 
       <WaterLogger waterMl={waterMl} />
+
+      <ExtrasForm foods={foods} />
+
+      {extras.length > 0 && (
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <h2 className="text-sm font-bold">Extras today</h2>
+          <ul className="mt-2 space-y-1.5 text-sm">
+            {extras.map((e) => (
+              <li key={e.id} className="flex justify-between gap-2">
+                <span>
+                  {e.food} <span className="text-slate-500">{e.grams}g</span>
+                </span>
+                <span className="shrink-0 text-slate-400">{e.calories} kcal</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {meals.map((m) => (
         <MealCard key={m.id} meal={m} />

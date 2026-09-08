@@ -1,14 +1,18 @@
 import UserProgress from "@/components/user-progress";
+import CheckinSection from "@/components/checkin-section";
 import {
   userBodyMeasurements,
   userProgressPhotos,
   userStrengthProgress,
   userWeightProgress,
 } from "@/data/userProgress";
-import { getUserProgress } from "@/lib/progress-queries";
+import { getUserProgress, getUserCheckins } from "@/lib/progress-queries";
 
 export default async function UserProgressPage() {
-  const { data, live } = await getUserProgress();
+  const [{ data, live }, checkins] = await Promise.all([
+    getUserProgress(),
+    getUserCheckins(),
+  ]);
 
   return (
     <div>
@@ -26,6 +30,7 @@ export default async function UserProgressPage() {
           photosLive={data.photosLive}
           live={live}
         />
+        {live && <CheckinSection checkins={checkins} />}
       </div>
     </div>
   );

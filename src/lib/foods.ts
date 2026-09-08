@@ -58,7 +58,7 @@ export async function addFood(
   const name = String(formData.get("name") ?? "").trim().slice(0, 80);
   const kind = String(formData.get("kind") ?? "food");
   if (!name) return { error: "Name can't be empty." };
-  if (kind !== "food" && kind !== "supplement") {
+  if (kind !== "food" && kind !== "supplement" && kind !== "drink") {
     return { error: "Invalid kind." };
   }
 
@@ -240,12 +240,24 @@ export interface MealWithFood {
 
 const zero = () => ({ calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
 
+export interface ExtraLog {
+  id: string;
+  food: string;
+  grams: number;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+}
+
 export async function getClientMeals(): Promise<{
   meals: MealWithFood[];
+  extras: ExtraLog[];
   waterMl: number;
   live: boolean;
 }> {
-  const fallback = { meals: [], waterMl: 0, live: false };
+  const fallback = { meals: [], extras: [], waterMl: 0, live: false };
   try {
     const supabase = await createClient();
     const {
@@ -288,6 +300,32 @@ export async function getClientMeals(): Promise<{
       );
 
     const checkMap = new Map((checks ?? []).map((c) => [c.meal_id, c.comment as string]));
+    const { data: extraRows } = await supabase
+      .from("food_logs")
+      .select("id, grams, food_items(name, calories_100, protein_100, carbs_100, fat_100, fiber_100)")
+      .eq("client_id", client.id)
+      .eq("logged_on", today);
+    const extras = (extraRows ?? []).map((r) => {
+      const f = r.food_items as unknown as {
+        name: string;
+        calories_100: number;
+        protein_100: number;
+        carbs_100: number;
+        fat_100: number;
+        fiber_100: number;
+      };
+      const k = Number(r.grams ?? 0) / 100;
+      return {
+        id: r.id,
+        food: f?.name ?? "Food",
+        grams: Number(r.grams ?? 0),
+        calories: +(Number(f?.calories_100 ?? 0) * k).toFixed(1),
+        protein: +(Number(f?.protein_100 ?? 0) * k).toFixed(1),
+        carbs: +(Number(f?.carbs_100 ?? 0) * k).toFixed(1),
+        fat: +(Number(f?.fat_100 ?? 0) * k).toFixed(1),
+        fiber: +(Number(f?.fiber_100 ?? 0) * k).toFixed(1),
+      };
+    });
     // Water counts last 24h (simple daily habit total).
     const cutoff = new Date(Date.now() - 24 * 3600 * 1000);
     const waterMl = (waterRows ?? [])
@@ -297,6 +335,7 @@ export async function getClientMeals(): Promise<{
     return {
       live: true,
       waterMl,
+      extras,
       meals: meals.map((m) => {
         const rows = (ingredients ?? []).filter((i) => i.meal_id === m.id);
         const list = rows.map((r) => {
@@ -376,6 +415,39 @@ export async function checkMeal(
     { meal_id: mealId, client_id: client.id, comment },
     { onConflict: "meal_id,checked_on" }
   );
+  if (error) return { error: "Couldn't save. Try again." };
+  revalidatePath("/dashboard/nutrition");
+  return { ok: true };
+}
+
+export async function logExtra(
+  _prev: FoodState,
+  formData: FormData
+): Promise<FoodState> {
+  const foodId = String(formData.get("foodId") ?? "");
+  const grams = Math.max(1, Math.min(5000, parseFloat(String(formData.get("grams") ?? "100")) || 0));
+  if (!foodId || !grams) return { error: "Pick a food and grams." };
+  let supabase;
+  try {
+    supabase = await createClient();
+  } catch {
+    return { error: "Supabase not connected yet." };
+  }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You're signed out. Sign in again." };
+  const { data: client } = await supabase
+    .from("clients")
+    .select("id")
+    .eq("profile_id", user.id)
+    .single();
+  if (!client) return { error: "No client record found." };
+  const { error } = await supabase.from("food_logs").insert({
+    client_id: client.id,
+    food_item_id: foodId,
+    grams,
+  });
   if (error) return { error: "Couldn't save. Try again." };
   revalidatePath("/dashboard/nutrition");
   return { ok: true };

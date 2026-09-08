@@ -44,6 +44,38 @@ export async function logWeight(
   return { ok: true };
 }
 
+export async function submitCheckin(
+  _prev: WeightLogState,
+  formData: FormData
+): Promise<WeightLogState> {
+  const notes = String(formData.get("notes") ?? "").trim().slice(0, 1000);
+  if (!notes) return { error: "Write a few words first." };
+
+  let supabase;
+  try {
+    supabase = await createClient();
+  } catch {
+    return { error: "Supabase not connected yet — check-in not saved." };
+  }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You're signed out. Sign in again." };
+  const { data: client } = await supabase
+    .from("clients")
+    .select("id")
+    .eq("profile_id", user.id)
+    .single();
+  if (!client) return { error: "No client record found." };
+
+  const { error } = await supabase
+    .from("check_ins")
+    .insert({ client_id: client.id, notes });
+  if (error) return { error: "Couldn't save. Try again." };
+  revalidatePath("/dashboard/progress");
+  return { ok: true };
+}
+
 const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
 export async function uploadPhoto(

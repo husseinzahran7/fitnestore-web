@@ -1,8 +1,11 @@
 import UserMeals from "@/components/user-meals";
-import { getClientMeals } from "@/lib/foods";
+import { getClientMeals, listFoods } from "@/lib/foods";
 
 export default async function UserNutritionPage() {
-  const { meals, waterMl, live } = await getClientMeals();
+  const [{ meals, extras, waterMl, live }, foods] = await Promise.all([
+    getClientMeals(),
+    listFoods(),
+  ]);
 
   return (
     <div>
@@ -12,7 +15,13 @@ export default async function UserNutritionPage() {
         {!live && " • no meals assigned yet — your coach will set them up."}
       </p>
       <div className="mt-6">
-        <UserMeals meals={meals} waterMl={waterMl} live={live} />
+        <UserMeals
+          meals={meals}
+          extras={extras}
+          foods={foods}
+          waterMl={waterMl}
+          live={live}
+        />
       </div>
     </div>
   );

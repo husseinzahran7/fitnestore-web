@@ -54,6 +54,9 @@ export default function FoodLibrary({
               <option value="supplement" className="bg-ink-900">
                 Supplement
               </option>
+              <option value="drink" className="bg-ink-900">
+                Drink
+              </option>
             </select>
           </div>
         </div>

@@ -134,6 +134,41 @@ async function listLivePhotos(
   }
 }
 
+export interface UserCheckin {
+  id: string;
+  date: string;
+  notes: string;
+}
+
+export async function getUserCheckins(): Promise<UserCheckin[]> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return [];
+    const { data: client } = await supabase
+      .from("clients")
+      .select("id")
+      .eq("profile_id", user.id)
+      .single();
+    if (!client) return [];
+    const { data } = await supabase
+      .from("check_ins")
+      .select("id, checked_on, notes")
+      .eq("client_id", client.id)
+      .order("checked_on", { ascending: false })
+      .limit(12);
+    return (data ?? []).map((r) => ({
+      id: r.id,
+      date: String(r.checked_on),
+      notes: String(r.notes ?? ""),
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export async function getCoachProgress(): Promise<{
   clients: ProgressClient[];
   live: boolean;
@@ -164,7 +199,7 @@ export async function getCoachProgress(): Promise<{
     const names = new Map((profiles ?? []).map((p) => [p.id, p.name]));
 
     const clientIds = rows.map((r) => r.id);
-    const [{ data: body }, { data: perf }] = await Promise.all([
+    const [{ data: body }, { data: perf }, { data: checkins }] = await Promise.all([
       supabase
         .from("body_metrics")
         .select("client_id, measured_on, weight, body_fat")
@@ -175,6 +210,12 @@ export async function getCoachProgress(): Promise<{
         .select("client_id, measured_on, metric, value")
         .in("client_id", clientIds)
         .order("measured_on", { ascending: true }),
+      supabase
+        .from("check_ins")
+        .select("id, client_id, checked_on, notes")
+        .in("client_id", clientIds)
+        .order("checked_on", { ascending: false })
+        .limit(60),
     ]);
 
     const clients: ProgressClient[] = rows.map((r) => {
@@ -209,8 +250,16 @@ export async function getCoachProgress(): Promise<{
           strength: own("strength"),
           endurance: own("endurance"),
         },
-        // No check-ins table exists — honestly empty, not fabricated.
-        checkIns: [],
+        // Real check-ins; empty when the client hasn't written any.
+        checkIns: (checkins ?? [])
+          .filter((ch) => ch.client_id === r.id)
+          .map((ch) => ({
+            id: ch.id,
+            date: String(ch.checked_on),
+            notes: String(ch.notes ?? ""),
+            completed: true,
+            metrics: {},
+          })),
       };
     });
     return { clients, live: true };
