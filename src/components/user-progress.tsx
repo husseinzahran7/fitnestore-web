@@ -1,0 +1,190 @@
+"use client";
+
+import { useActionState, useState } from "react";
+import { logWeight } from "@/lib/progress-actions";
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  userBodyMeasurements,
+  userProgressPhotos,
+  userStrengthProgress,
+  userWeightProgress,
+  type MeasurementPoint,
+  type ProgressPhoto,
+  type StrengthPoint,
+  type WeightPoint,
+} from "@/data/userProgress";
+
+const TABS = ["weight", "strength", "measurements", "photos"] as const;
+
+const chartBox = "h-[280px]";
+const tipStyle = {
+  background: "#0b1220",
+  border: "1px solid rgba(255,255,255,0.1)",
+  borderRadius: 12,
+};
+
+export default function UserProgress({
+  weight = userWeightProgress,
+  strength = userStrengthProgress,
+  measurements = userBodyMeasurements,
+  photos = userProgressPhotos,
+  live = false,
+}: {
+  weight?: WeightPoint[];
+  strength?: StrengthPoint[];
+  measurements?: MeasurementPoint[];
+  photos?: ProgressPhoto[];
+  live?: boolean;
+} = {}) {
+  const [tab, setTab] = useState<(typeof TABS)[number]>("weight");
+
+  return (
+    <div>
+      <div className="grid max-w-lg grid-cols-4 gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
+        {TABS.map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`rounded-full py-2 text-xs font-semibold capitalize transition-colors sm:text-sm ${
+              tab === t ? "bg-brand-500 text-white" : "text-slate-400 hover:text-white"
+            }`}
+          >
+            {t === "measurements" ? "Measure" : t}
+          </button>
+        ))}
+      </div>
+
+      {tab === "weight" && (
+        <>
+          {live && <WeightLogForm />}
+          <div className={`mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5 ${chartBox}`}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={weight} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff14" />
+              <XAxis dataKey="date" tick={{ fill: "#94a3b8", fontSize: 12 }} />
+              <YAxis tick={{ fill: "#94a3b8", fontSize: 12 }} domain={["dataMin - 5", "dataMax + 5"]} />
+              <Tooltip contentStyle={tipStyle} />
+              <Line type="monotone" dataKey="weight" stroke="#0080ff" strokeWidth={2.5} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+          </div>
+        </>
+      )}
+
+      {tab === "strength" && (
+        <div className={`mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5 ${chartBox}`}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={strength} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#ffffff14" />
+              <XAxis dataKey="date" tick={{ fill: "#94a3b8", fontSize: 12 }} />
+              <YAxis tick={{ fill: "#94a3b8", fontSize: 12 }} domain={["dataMin - 20", "dataMax + 20"]} />
+              <Tooltip contentStyle={tipStyle} />
+              <Line type="monotone" dataKey="squat" stroke="#0080ff" strokeWidth={2.5} dot={false} />
+              <Line type="monotone" dataKey="bench" stroke="#22c55e" strokeWidth={2} dot={false} />
+              <Line type="monotone" dataKey="deadlift" stroke="#f59e0b" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {tab === "measurements" && (
+        <div className="mt-5 overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.03]">
+          <table className="w-full min-w-[480px] text-left text-sm">
+            <thead>
+              <tr className="border-b border-white/10 text-slate-400">
+                <th className="px-5 py-3 font-semibold">Week</th>
+                <th className="px-5 py-3 font-semibold">Chest (in)</th>
+                <th className="px-5 py-3 font-semibold">Waist (in)</th>
+                <th className="px-5 py-3 font-semibold">Arms (in)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {measurements.map((m) => (
+                <tr key={m.date} className="border-b border-white/5 last:border-0">
+                  <td className="px-5 py-3 font-semibold">{m.date}</td>
+                  <td className="px-5 py-3">{m.chest}</td>
+                  <td className="px-5 py-3">{m.waist}</td>
+                  <td className="px-5 py-3">{m.arms}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {tab === "photos" && (
+        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {photos.length === 0 ? (
+            <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-sm text-slate-400">
+              No photos yet.
+            </p>
+          ) : (
+            photos.map((p) => (
+            <div key={p.week} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-center">
+              <p className="text-sm font-bold">{p.week}</p>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={p.front} alt={`${p.week} front`} className="rounded-xl" loading="lazy" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={p.side} alt={`${p.week} side`} className="rounded-xl" loading="lazy" />
+              </div>
+            </div>
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function WeightLogForm() {
+  const [state, action, pending] = useActionState(logWeight, {});
+
+  return (
+    <form
+      action={action}
+      className="mt-5 flex flex-col gap-2 rounded-2xl border border-white/10 bg-white/[0.03] p-4 sm:flex-row sm:items-end"
+    >
+      <div className="flex-1">
+        <label htmlFor="weight" className="mb-1.5 block text-sm font-medium">
+          Log today&apos;s weight (kg)
+        </label>
+        <input
+          id="weight"
+          name="weight"
+          type="number"
+          step="0.1"
+          min="1"
+          required
+          placeholder="80.5"
+          className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm outline-none placeholder:text-slate-500 focus:border-brand-500"
+        />
+      </div>
+      <button
+        type="submit"
+        disabled={pending}
+        className="rounded-full bg-brand-500 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-brand-400 disabled:opacity-60"
+      >
+        {pending ? "Saving…" : "Log weight"}
+      </button>
+      {state?.error && (
+        <p role="alert" className="text-xs text-red-400 sm:self-center">
+          {state.error}
+        </p>
+      )}
+      {state?.ok && (
+        <p role="status" className="text-xs text-green-400 sm:self-center">
+          Saved.
+        </p>
+      )}
+    </form>
+  );
+}
