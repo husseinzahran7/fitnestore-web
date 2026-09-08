@@ -3,6 +3,40 @@
 import { createClient } from "@/lib/supabase/server";
 import type { NutritionPlan } from "@/data/mockNutrition";
 
+export interface CoachClientLite {
+  id: string;
+  name: string;
+}
+
+export async function getCoachClients(): Promise<CoachClientLite[]> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return [];
+    const { data: rows } = await supabase
+      .from("clients")
+      .select("id, profile_id")
+      .eq("coach_id", user.id);
+    if (!rows || rows.length === 0) return [];
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, name")
+      .in(
+        "id",
+        rows.map((r) => r.profile_id)
+      );
+    const names = new Map((profiles ?? []).map((p) => [p.id, p.name]));
+    return rows.map((r) => ({
+      id: r.id,
+      name: (names.get(r.profile_id) as string) ?? "Client",
+    }));
+  } catch {
+    return [];
+  }
+}
+
 // Live templates mapped 1:1 onto NutritionPlan. Real columns only:
 // nutrition_plans(id, coach_id, title, description, tags, is_template, created_at).
 // clientCount = number of meals rows referencing the plan (honest usage count).

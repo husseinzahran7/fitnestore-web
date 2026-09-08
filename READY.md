@@ -34,7 +34,7 @@ pnpm dev --webpack           # dev script already pins --webpack; Turbopack cras
 | Weight logging | LIVE (writes body_metrics as owner) |
 | Settings name ×3 roles | LIVE (persisted) |
 | Admin policies + public policy pages | LIVE (3 seeded rows, anon-readable) |
-| Coach schedule appointments | MOCK — proposal at `fitnestore-hub/docs/PROPOSAL_0004_APPOINTMENTS.md`, tables not applied yet |
+| Coach meal logging (plan + client + details, honest usage counts) | LIVE |
 | Coach profile editor (bio, specialties + free text, certs, WhatsApp, free toggle) | LIVE |
 | Admin approval queue (approve/unlist, directory hides/shows) | LIVE |
 | Workout tracking (start mode, set logs, warmup, reorder, prefill, history) | LIVE |

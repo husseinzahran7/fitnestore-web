@@ -1,12 +1,22 @@
 import NutritionBoards from "@/components/nutrition-boards";
-import { mockClientMealPlans, mockNutritionPlans } from "@/data/mockNutrition";
-import { getNutritionTemplates } from "@/lib/nutrition-queries";
+import MealLogForm from "@/components/meal-log-form";
+import {
+  mockClientMealPlans,
+  mockNutritionPlans,
+} from "@/data/mockNutrition";
+import {
+  getCoachClients,
+  getNutritionTemplates,
+} from "@/lib/nutrition-queries";
 
 export default async function CoachNutritionPage() {
   // Templates read live; per-client plans stay mock — meals rows carry
   // name/day/details only, while the board shows dates/status/adherence
   // that have no backend columns. Wiring plans live would fabricate fields.
-  const { templates, live } = await getNutritionTemplates();
+  const [{ templates, live }, clients] = await Promise.all([
+    getNutritionTemplates(),
+    getCoachClients(),
+  ]);
 
   return (
     <div>
@@ -21,6 +31,9 @@ export default async function CoachNutritionPage() {
           plans={mockClientMealPlans}
         />
       </div>
+      {live && templates.length > 0 && clients.length > 0 && (
+        <MealLogForm plans={templates} clients={clients} />
+      )}
     </div>
   );
 }
