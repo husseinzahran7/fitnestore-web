@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, requireActive } from "@/lib/supabase/server";
 
 export type ClientStatusState = { error?: string; ok?: boolean };
 
@@ -27,6 +27,7 @@ export async function updateClientStatus(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
+  if (!(await requireActive())) return { error: "Account suspended." };
 
   // RLS enforces coach_id = auth.uid(); no extra checks here.
   const { error } = await supabase

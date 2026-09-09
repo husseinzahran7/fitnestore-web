@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, requireActive } from "@/lib/supabase/server";
 import type { CoachCard, CoachDetail, ConsultState } from "@/lib/coach-data";
 import { SPECIALTIES } from "@/lib/coach-data";
 
@@ -83,6 +83,7 @@ export async function requestConsult(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "Sign in to request a consult." };
+  if (!(await requireActive())) return { error: "Account suspended." };
 
   const coach = await getCoach(coachId);
   if (!coach) return { error: "Coach not found." };
@@ -183,6 +184,7 @@ export async function decideConsult(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
+  if (!(await requireActive())) return { error: "Account suspended." };
 
   const { data: req } = await supabase
     .from("consult_requests")
@@ -284,6 +286,7 @@ export async function uploadAvatar(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
+  if (!(await requireActive())) return { error: "Account suspended." };
 
   const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
   const path = `${user.id}/avatar.${ext}`;
@@ -334,6 +337,7 @@ export async function saveCoachProfile(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
+  if (!(await requireActive())) return { error: "Account suspended." };
 
   const { error } = await supabase.from("coach_profiles").upsert(
     {
@@ -394,6 +398,104 @@ export async function listCoachesForAdmin(): Promise<PendingCoach[]> {
   }
 }
 
+export interface ManagedUser {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  disabled: boolean;
+  protected: boolean;
+}
+
+async function requireSuperadmin(): Promise<
+  { supabase: Awaited<ReturnType<typeof createClient>> } | { error: string }
+> {
+  let supabase;
+  try {
+    supabase = await createClient();
+  } catch {
+    return { error: "Supabase not connected yet." };
+  }
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "You're signed out. Sign in again." };
+  if (!(await requireActive())) return { error: "Account suspended." };
+  const { data: me } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+  if (me?.role !== "superadmin") return { error: "Superadmins only." };
+  return { supabase };
+}
+
+export async function listUsers(): Promise<ManagedUser[]> {
+  try {
+    const gate = await requireSuperadmin();
+    if ("error" in gate) return [];
+    const { data, error } = await gate.supabase
+      .from("profiles")
+      .select("id, role, name, disabled")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error || !data) return [];
+    return data.map((p) => ({
+      id: p.id,
+      email: "",
+      name: String(p.name ?? ""),
+      role: String(p.role ?? "user"),
+      disabled: !!p.disabled,
+      protected: String(p.role ?? "") === "superadmin",
+    }));
+  } catch {
+    return [];
+  }
+}
+
+export type UserAdminState = { error?: string; ok?: boolean };
+
+export async function setUserRole(
+  _prev: UserAdminState,
+  formData: FormData
+): Promise<UserAdminState> {
+  const id = String(formData.get("id") ?? "");
+  const role = String(formData.get("role") ?? "");
+  if (!id || !["user", "coach", "admin"].includes(role)) {
+    return { error: "Invalid request." };
+  }
+  const gate = await requireSuperadmin();
+  if ("error" in gate) return { error: gate.error };
+  // Never touch fellow superadmins (RLS enforces the same rule).
+  const { error } = await gate.supabase
+    .from("profiles")
+    .update({ role })
+    .eq("id", id)
+    .neq("role", "superadmin");
+  if (error) return { error: "Couldn't save. Try again." };
+  revalidatePath("/admin/users");
+  return { ok: true };
+}
+
+export async function setUserDisabled(
+  _prev: UserAdminState,
+  formData: FormData
+): Promise<UserAdminState> {
+  const id = String(formData.get("id") ?? "");
+  const disabled = formData.get("disabled") === "true";
+  if (!id) return { error: "Invalid request." };
+  const gate = await requireSuperadmin();
+  if ("error" in gate) return { error: gate.error };
+  const { error } = await gate.supabase
+    .from("profiles")
+    .update({ disabled })
+    .eq("id", id)
+    .neq("role", "superadmin");
+  if (error) return { error: "Couldn't save. Try again." };
+  revalidatePath("/admin/users");
+  return { ok: true };
+}
+
 export async function decideApproval(
   _prev: DecideState,
   formData: FormData
@@ -411,6 +513,7 @@ export async function decideApproval(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
+  if (!(await requireActive())) return { error: "Account suspended." };
   // RLS admin-all policy is the real gate; this keeps honest errors.
   const { data: me } = await supabase
     .from("profiles")

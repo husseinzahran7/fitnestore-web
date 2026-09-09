@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, requireActive } from "@/lib/supabase/server";
 import { getCoachClients } from "@/lib/nutrition-queries";
 
 export type FoodState = { error?: string; ok?: boolean };
@@ -72,6 +72,7 @@ export async function addFood(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
+  if (!(await requireActive())) return { error: "Account suspended." };
 
   const { error } = await supabase.from("food_items").insert({
     coach_id: user.id,
@@ -107,6 +108,7 @@ export async function addIngredient(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
+  if (!(await requireActive())) return { error: "Account suspended." };
 
   // RLS ingredients-coach-write is the real gate (own plan or own client).
   const { error } = await supabase.from("meal_ingredients").insert({
@@ -404,6 +406,7 @@ export async function checkMeal(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
+  if (!(await requireActive())) return { error: "Account suspended." };
   const { data: client } = await supabase
     .from("clients")
     .select("id")
@@ -437,6 +440,7 @@ export async function logExtra(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
+  if (!(await requireActive())) return { error: "Account suspended." };
   const { data: client } = await supabase
     .from("clients")
     .select("id")
@@ -469,6 +473,7 @@ export async function logWater(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
+  if (!(await requireActive())) return { error: "Account suspended." };
   const { data: client } = await supabase
     .from("clients")
     .select("id")

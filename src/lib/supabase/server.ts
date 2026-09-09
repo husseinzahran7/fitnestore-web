@@ -43,6 +43,7 @@ export interface Viewer {
   name: string;
   role: Role;
   membership?: string;
+  disabled: boolean;
 }
 
 /** Session + profile, or null when signed out / unconfigured. Never throws.
@@ -56,11 +57,13 @@ export const getViewer: () => Promise<Viewer | null> = cache(async () => {
     if (!user) return null;
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role, name, membership")
+      .select("role, name, membership, disabled")
       .eq("id", user.id)
       .single();
     const role: Role =
-      profile?.role === "coach" || profile?.role === "admin"
+      profile?.role === "coach" ||
+      profile?.role === "admin" ||
+      profile?.role === "superadmin"
         ? profile.role
         : "user";
     return {
@@ -72,8 +75,16 @@ export const getViewer: () => Promise<Viewer | null> = cache(async () => {
         "Member",
       role,
       membership: (profile?.membership as string | undefined) ?? undefined,
+      disabled: !!profile?.disabled,
     };
   } catch {
     return null;
   }
 });
+
+/** False when signed out OR the account is disabled. Call at the top of
+ * every mutation; layouts bounce disabled viewers to /suspended. */
+export async function requireActive(): Promise<boolean> {
+  const viewer = await getViewer();
+  return !!viewer && !viewer.disabled;
+}

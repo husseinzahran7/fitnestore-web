@@ -16,6 +16,7 @@ const dict = {
       myProfile: "My Profile",
       coaches: "Coaches",
       policies: "Policies",
+      users: "Users",
     },
     auth: { signIn: "Sign in", signOut: "Logout", search: "Search…" },
     pages: {
@@ -51,6 +52,7 @@ const dict = {
       myProfile: "ملفي",
       coaches: "المدربون",
       policies: "السياسات",
+      users: "المستخدمون",
     },
     auth: { signIn: "تسجيل الدخول", signOut: "تسجيل الخروج", search: "ابحث…" },
     pages: {

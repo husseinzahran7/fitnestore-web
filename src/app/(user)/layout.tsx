@@ -11,6 +11,7 @@ export default async function UserLayout({
 }) {
   const viewer = await getViewer();
   if (!viewer) redirect("/login");
+  if (viewer.disabled) redirect("/suspended");
   if (viewer.role !== "user") redirect(homeForRole(viewer.role));
   const [t, locale] = await Promise.all([getDict(), getLocale()]);
   return (

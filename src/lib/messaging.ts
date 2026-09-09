@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, requireActive } from "@/lib/supabase/server";
 import type { Conversation } from "@/data/mockConversations";
 
 // Live conversations mapped onto the shared Conversation shape.
@@ -114,6 +114,7 @@ export async function sendMessage(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
+  if (!(await requireActive())) return { error: "Account suspended." };
 
   // RLS enforces sender_id = auth.uid() + membership; no extra checks here.
   const { error } = await supabase.from("messages").insert({

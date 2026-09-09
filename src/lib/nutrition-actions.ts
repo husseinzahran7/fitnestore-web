@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, requireActive } from "@/lib/supabase/server";
 
 export type MealState = { error?: string; ok?: boolean };
 
@@ -23,6 +23,7 @@ export async function assignTemplate(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
+  if (!(await requireActive())) return { error: "Account suspended." };
 
   // Template must be a live template row (RLS read covers visibility).
   const { data: template } = await supabase
@@ -98,6 +99,7 @@ export async function logMeal(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
+  if (!(await requireActive())) return { error: "Account suspended." };
 
   // RLS meals-coach-write enforces (own plan or own client); admin bypasses.
   const { error } = await supabase.from("meals").insert({

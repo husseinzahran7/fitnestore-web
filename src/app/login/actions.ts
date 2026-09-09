@@ -46,6 +46,17 @@ export async function login(
   });
   if (error || !data.user) return { error: "Invalid email or password." };
 
+  // Disabled accounts stop here with a message instead of a bounce loop.
+  const { data: blocked } = await supabase
+    .from("profiles")
+    .select("disabled")
+    .eq("id", data.user.id)
+    .single();
+  if (blocked?.disabled) {
+    await supabase.auth.signOut();
+    return { error: "Account suspended. Contact support." };
+  }
+
   revalidatePath("/", "layout");
   const home = await homeForRole(supabase, data.user.id, email.split("@")[0]);
   if (next.startsWith("/") && !next.startsWith("//")) redirect(next);

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, requireActive } from "@/lib/supabase/server";
 
 export type WeightLogState = { error?: string; ok?: boolean };
 
@@ -25,6 +25,7 @@ export async function logWeight(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
+  if (!(await requireActive())) return { error: "Account suspended." };
 
   const { data: client } = await supabase
     .from("clients")
@@ -61,6 +62,7 @@ export async function submitCheckin(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
+  if (!(await requireActive())) return { error: "Account suspended." };
   const { data: client } = await supabase
     .from("clients")
     .select("id")
@@ -103,6 +105,7 @@ export async function uploadPhoto(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
+  if (!(await requireActive())) return { error: "Account suspended." };
 
   // Owner-full storage policy keys on folder <uid>/ — path must match.
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
@@ -143,6 +146,7 @@ export async function logClientMetric(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
+  if (!(await requireActive())) return { error: "Account suspended." };
 
   // Coach-insert policy enforces ownership (coach_id = auth.uid()).
   const { error } = await supabase.from("body_metrics").insert({

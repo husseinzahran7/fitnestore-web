@@ -65,18 +65,27 @@ const buildNav = (t: Dict["nav"]): Record<Role, NavItem[]> => ({
     { icon: FileText, label: t.policies, path: "/admin/policies" },
     { icon: Settings, label: t.settings, path: "/admin/settings" },
   ],
+  superadmin: [
+    { icon: LayoutDashboard, label: t.dashboard, path: "/admin" },
+    { icon: Users, label: t.users, path: "/admin/users" },
+    { icon: Users, label: t.coaches, path: "/admin/coaches" },
+    { icon: FileText, label: t.policies, path: "/admin/policies" },
+    { icon: Settings, label: t.settings, path: "/admin/settings" },
+  ],
 });
 
 const PILL: Record<Role, string | null> = {
   user: null,
   coach: "Coach",
   admin: "Admin",
+  superadmin: "Owner",
 };
 
 const SUBTITLE: Record<Role, (v: Viewer) => string> = {
   user: (v) => v.membership ?? "Member",
   coach: () => "Coach Portal",
   admin: () => "Admin Portal",
+  superadmin: () => "Owner Portal",
 };
 
 export default function DashboardShell({

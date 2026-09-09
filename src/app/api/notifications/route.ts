@@ -25,7 +25,7 @@ export async function GET() {
         .eq("status", "pending");
       return NextResponse.json({ count: count ?? 0, href: "/coach/messages", home });
     }
-    if (viewer.role === "admin") {
+    if (viewer.role === "admin" || viewer.role === "superadmin") {
       const { count } = await supabase
         .from("coach_profiles")
         .select("profile_id", { count: "exact", head: true })

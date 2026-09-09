@@ -11,8 +11,9 @@ export default async function CoachLayout({
 }) {
   const viewer = await getViewer();
   if (!viewer) redirect("/login");
+  if (viewer.disabled) redirect("/suspended");
   // Admins may enter coach routes (legacy behavior, kept).
-  if (viewer.role !== "coach" && viewer.role !== "admin") {
+  if (viewer.role !== "coach" && viewer.role !== "admin" && viewer.role !== "superadmin") {
     redirect(homeForRole(viewer.role));
   }
   const [t, locale] = await Promise.all([getDict(), getLocale()]);

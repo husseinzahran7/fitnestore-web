@@ -11,10 +11,17 @@ export default async function AdminLayout({
 }) {
   const viewer = await getViewer();
   if (!viewer) redirect("/login");
-  if (viewer.role !== "admin") redirect(homeForRole(viewer.role));
+  if (viewer.disabled) redirect("/suspended");
+  if (viewer.role !== "admin" && viewer.role !== "superadmin")
+    redirect(homeForRole(viewer.role));
   const [t, locale] = await Promise.all([getDict(), getLocale()]);
   return (
-    <DashboardShell role="admin" viewer={viewer} t={t} locale={locale}>
+    <DashboardShell
+      role={viewer.role === "superadmin" ? "superadmin" : "admin"}
+      viewer={viewer}
+      t={t}
+      locale={locale}
+    >
       {children}
     </DashboardShell>
   );
