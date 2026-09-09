@@ -37,6 +37,8 @@ Live = backed by Supabase. Mock = hardcoded fallback when unconfigured.
   Done/Cancel, .ics download (Apple/Google/Outlook), client upcoming block.
 
 ## Platform
+- Superadmin (owner) role: Admin → Users page — set roles, disable/enable
+  accounts; suspended users bounce to /suspended and can't log in or mutate.
 - Arabic foundation: RTL shell, Cairo font, locale cookie toggle, nav + auth
   dictionary, user-portal page chrome translated.
 - Perf: cached viewer per request, loading skeletons, targeted revalidation.

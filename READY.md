@@ -42,6 +42,8 @@ Stop it: `Ctrl+C`. Port busy? `Get-Process node | Stop-Process`.
 | Arabic (RTL shell, nav, user pages; toggle everywhere) | LIVE foundation |
 | Notifications bell (requests/approvals counts) | LIVE |
 | Admin policies + public pages | LIVE, anon-readable |
+| Superadmin users (roles, disable/enable, suspend flow) | LIVE |
+| Docs (`docs/`: architecture, roles, flows, schema) + CHANGELOG | current |
 | Client meal plans board | MOCK — rows lack dates/status/adherence columns |
 | Check-ins | LIVE (table 0018, both sides) |
 
