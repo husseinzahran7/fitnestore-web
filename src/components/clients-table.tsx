@@ -42,14 +42,14 @@ export default function ClientsTable({
       <div className="relative mb-5 max-w-sm">
         <Search
           size={16}
-          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
+          className="absolute start-3.5 top-1/2 -translate-y-1/2 text-slate-500 rtl:-scale-x-100"
         />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search clients…"
           aria-label="Search clients"
-          className="w-full rounded-xl border border-white/15 bg-white/5 py-2.5 pl-10 pr-4 text-sm outline-none placeholder:text-slate-500 focus:border-brand-500"
+          className="w-full rounded-xl border border-white/15 bg-white/5 py-2.5 ps-10 pe-4 text-sm outline-none placeholder:text-slate-500 focus:border-brand-500"
         />
       </div>
 
@@ -70,7 +70,9 @@ export default function ClientsTable({
                 </div>
                 <div className="min-w-0">
                   <div className="truncate font-semibold">{c.name}</div>
-                  <div className="truncate text-sm text-slate-400">{c.email}</div>
+                  {c.email && (
+                    <div className="truncate text-sm text-slate-400">{c.email}</div>
+                  )}
                 </div>
               </div>
 

@@ -25,7 +25,7 @@ export default function BellButton() {
     >
       <BellRing size={20} />
       {count > 0 && (
-        <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">
+        <span className="absolute -end-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand-500 text-[10px] font-bold text-white">
           {count > 9 ? "9+" : count}
         </span>
       )}

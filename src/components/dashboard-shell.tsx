@@ -62,6 +62,7 @@ const buildNav = (t: Dict["nav"]): Record<Role, NavItem[]> => ({
   admin: [
     { icon: LayoutDashboard, label: t.dashboard, path: "/admin" },
     { icon: Users, label: t.coaches, path: "/admin/coaches" },
+    { icon: UserCheck, label: t.subscriptions, path: "/admin/subscriptions" },
     { icon: FileText, label: t.policies, path: "/admin/policies" },
     { icon: Settings, label: t.settings, path: "/admin/settings" },
   ],
@@ -69,6 +70,7 @@ const buildNav = (t: Dict["nav"]): Record<Role, NavItem[]> => ({
     { icon: LayoutDashboard, label: t.dashboard, path: "/admin" },
     { icon: Users, label: t.users, path: "/admin/users" },
     { icon: Users, label: t.coaches, path: "/admin/coaches" },
+    { icon: UserCheck, label: t.subscriptions, path: "/admin/subscriptions" },
     { icon: FileText, label: t.policies, path: "/admin/policies" },
     { icon: Settings, label: t.settings, path: "/admin/settings" },
   ],
@@ -107,7 +109,7 @@ export default function DashboardShell({
   const pathname = usePathname();
   const nav = buildNav(t.nav)[role];
   const utility = role !== "user";
-  const ProfileIcon = role === "admin" ? Shield : User;
+  const ProfileIcon = role === "admin" || role === "superadmin" ? Shield : User;
 
   const renderItem = (it: NavItem, mini?: boolean) => {
     const active = pathname === it.path;
@@ -127,12 +129,12 @@ export default function DashboardShell({
             : "text-slate-400 hover:bg-white/5 hover:text-white"
         )}
       >
-        <Icon size={18} className={mini ? "" : "mr-3 shrink-0"} />
+        <Icon size={18} className={mini ? "" : "me-3 shrink-0 rtl:-scale-x-100"} />
         {!mini && <span className="flex-1 truncate">{it.label}</span>}
         {!mini && it.badge != null && (
           <span
             className={cx(
-              "ml-auto rounded-full px-2 py-0.5 text-xs font-bold",
+              "ms-auto rounded-full px-2 py-0.5 text-xs font-bold",
               active ? "bg-white/20 text-white" : "bg-brand-500/15 text-brand-400"
             )}
           >
@@ -140,7 +142,7 @@ export default function DashboardShell({
           </span>
         )}
         {mini && it.badge != null && (
-          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 p-0 text-[11px] font-bold text-white">
+          <span className="absolute -end-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand-500 p-0 text-[11px] font-bold text-white">
             {it.badge}
           </span>
         )}
@@ -153,7 +155,7 @@ export default function DashboardShell({
       {!mini ? (
         <>
           <div className="flex items-center p-3">
-            <div className="mr-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-500/15">
+            <div className="me-3 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-500/15">
               <ProfileIcon size={20} className="text-brand-400" />
             </div>
             <div className="min-w-0">
@@ -169,7 +171,7 @@ export default function DashboardShell({
                 type="submit"
                 className="flex w-full items-center rounded-lg border border-white/15 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-white/10"
               >
-                <LogOut size={16} className="mr-2" />
+                <LogOut size={16} className="me-2 rtl:-scale-x-100" />
                 {t.auth.signOut}
               </button>
             </form>
@@ -200,7 +202,7 @@ export default function DashboardShell({
       {/* desktop sidebar */}
       <aside
         className={cx(
-          "fixed inset-y-0 z-30 hidden border-r border-white/10 bg-ink-900 transition-all duration-300 md:block",
+          "fixed inset-y-0 z-30 hidden border-e border-white/10 bg-ink-900 transition-all duration-300 md:block",
           collapsed ? "w-24" : "w-80"
         )}
       >
@@ -227,7 +229,7 @@ export default function DashboardShell({
                 <>
                   GYM<span className="text-brand-500">ers</span>
                   {PILL[role] && (
-                    <span className="ml-2 rounded bg-brand-500/15 px-2 py-0.5 text-sm text-brand-400">
+                    <span className="ms-2 rounded bg-brand-500/15 px-2 py-0.5 text-sm text-brand-400">
                       {PILL[role]}
                     </span>
                   )}
@@ -237,7 +239,7 @@ export default function DashboardShell({
             <button
               onClick={() => setCollapsed(!collapsed)}
               aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-              className="shrink-0 rounded-lg p-2 transition-colors hover:bg-white/10"
+              className="shrink-0 rounded-lg p-2 transition-colors hover:bg-white/10 rtl:rotate-180"
             >
               {collapsed ? <ChevronsRight size={18} /> : <ChevronsLeft size={18} />}
             </button>
@@ -263,15 +265,15 @@ export default function DashboardShell({
         aria-modal="true"
         aria-label="Navigation menu"
         className={cx(
-          "fixed inset-y-0 left-0 z-50 flex w-full max-w-xs flex-col border-r border-white/10 bg-ink-900 transition-transform duration-300 md:hidden",
-          mobileOpen ? "translate-x-0" : "-translate-x-full"
+          "fixed inset-y-0 start-0 z-50 flex w-full max-w-xs flex-col border-e border-white/10 bg-ink-900 transition-transform duration-300 md:hidden",
+          mobileOpen ? "translate-x-0" : "-translate-x-full rtl:translate-x-full"
         )}
       >
         <div className="flex items-center justify-between border-b border-white/10 px-6 py-4">
           <span className="text-xl font-extrabold">
             GYM<span className="text-brand-500">ers</span>
             {PILL[role] && (
-              <span className="ml-2 rounded bg-brand-500/15 px-2 py-0.5 text-sm text-brand-400">
+              <span className="ms-2 rounded bg-brand-500/15 px-2 py-0.5 text-sm text-brand-400">
                 {PILL[role]}
               </span>
             )}
@@ -294,7 +296,7 @@ export default function DashboardShell({
       <main
         className={cx(
           "flex min-h-screen flex-1 flex-col transition-all duration-300",
-          collapsed ? "md:ml-24" : "md:ml-80"
+          collapsed ? "md:ms-24" : "md:ms-80"
         )}
       >
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/10 bg-ink-950/90 px-4 py-2 backdrop-blur-lg md:hidden">
@@ -302,7 +304,7 @@ export default function DashboardShell({
             <button
               onClick={() => setMobileOpen(true)}
               aria-label="Open navigation menu"
-              className="mr-2 shrink-0 rounded-lg p-2 hover:bg-white/10"
+              className="me-2 shrink-0 rounded-lg p-2 hover:bg-white/10"
             >
               <Menu size={20} />
             </button>
@@ -310,7 +312,7 @@ export default function DashboardShell({
               GYM<span className="text-brand-500">ers</span>
             </span>
           </div>
-          <LocaleToggle current={locale} />
+          {!utility && <LocaleToggle current={locale} />}
           {utility && (
             <div className="flex shrink-0 items-center gap-1">
               <LocaleToggle current={locale} />

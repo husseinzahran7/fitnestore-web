@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import CopyIdButton from "@/components/copy-id";
 import {
   setUserDisabled,
   setUserRole,
@@ -101,8 +102,11 @@ export default function UsersTable({ users }: { users: ManagedUser[] }) {
                 </span>
               )}
             </div>
-            <div className="mt-0.5 font-mono text-xs text-slate-500">
-              {u.id.slice(0, 8)}…
+            <div className="mt-1 flex items-center gap-1.5">
+              <span className="truncate font-mono text-xs text-slate-500">
+                {u.id}
+              </span>
+              <CopyIdButton id={u.id} label="Copy full user ID" />
             </div>
           </div>
           <RowActions user={u} />

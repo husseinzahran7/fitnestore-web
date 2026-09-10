@@ -42,6 +42,10 @@ export async function assignTemplate(
     .single();
   if (!client) return { error: "Client not found." };
 
+  const { coachMaySend } = await import("@/lib/subscriptions");
+  const gate = await coachMaySend(clientId);
+  if (!gate.ok) return { error: gate.error ?? "Subscription expired." };
+
   const { data: plan, error: planError } = await supabase
     .from("nutrition_plans")
     .insert({
@@ -73,6 +77,8 @@ export async function assignTemplate(
   }
 
   revalidatePath("/coach/nutrition");
+  const { startClockForClientId } = await import("@/lib/subscriptions");
+  await startClockForClientId(clientId);
   return { ok: true };
 }
 
@@ -102,6 +108,10 @@ export async function logMeal(
   if (!(await requireActive())) return { error: "Account suspended." };
 
   // RLS meals-coach-write enforces (own plan or own client); admin bypasses.
+  // Subscription gate first for a clear message.
+  const { coachMaySend } = await import("@/lib/subscriptions");
+  const gate = await coachMaySend(clientId);
+  if (!gate.ok) return { error: gate.error ?? "Subscription expired." };
   const { error } = await supabase.from("meals").insert({
     plan_id: planId,
     client_id: clientId,

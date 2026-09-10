@@ -96,11 +96,21 @@ export async function requestConsult(
     .single();
   if (convError || !conv) return { error: "Couldn't start chat. Try again." };
 
+  // Best-effort orphan cleanup. Child rows (participants, messages,
+  // request) all hang off conversations ON DELETE CASCADE, so one
+  // parent delete removes the half-created thread.
+  const dropThread = async () => {
+    await supabase.from("conversations").delete().eq("id", conv.id);
+  };
+
   // Self membership first, then the request row the coach will accept.
   const { error: p1 } = await supabase
     .from("conversation_participants")
     .insert({ conversation_id: conv.id, profile_id: user.id });
-  if (p1) return { error: "Couldn't start chat. Try again." };
+  if (p1) {
+    await dropThread();
+    return { error: "Couldn't start chat. Try again." };
+  }
 
   const { error: rError } = await supabase.from("consult_requests").insert({
     conversation_id: conv.id,
@@ -108,14 +118,20 @@ export async function requestConsult(
     user_id: user.id,
     note,
   });
-  if (rError) return { error: "Couldn't send request. Try again." };
+  if (rError) {
+    await dropThread();
+    return { error: "Couldn't send request. Try again." };
+  }
 
   const { error: mError } = await supabase.from("messages").insert({
     conversation_id: conv.id,
     sender_id: user.id,
     content: `${label}${note ? ` — ${note}` : ""}`,
   });
-  if (mError) return { error: "Couldn't send request. Try again." };
+  if (mError) {
+    await dropThread();
+    return { error: "Couldn't send request. Try again." };
+  }
 
   revalidatePath("/dashboard/messages");
   redirect("/dashboard/messages");
@@ -197,10 +213,12 @@ export async function decideConsult(
 
   if (decision === "accepted") {
     // Own row via the plain self-insert policy — no cross-table checks.
+    // 23505 = already a member after a retried accept; keep going.
     const { error: joinError } = await supabase
       .from("conversation_participants")
       .insert({ conversation_id: req.conversation_id, profile_id: user.id });
-    if (joinError) return { error: "Couldn't join chat. Try again." };
+    if (joinError && joinError.code !== "23505")
+      return { error: "Couldn't join chat. Try again." };
   }
   const { error: updError } = await supabase
     .from("consult_requests")
@@ -520,7 +538,7 @@ export async function decideApproval(
     .select("role")
     .eq("id", user.id)
     .single();
-  if (me?.role !== "admin") return { error: "Admins only." };
+  if (me?.role !== "admin" && me?.role !== "superadmin") return { error: "Admins only." };
   const { error } = await supabase
     .from("coach_profiles")
     .update({ approved })

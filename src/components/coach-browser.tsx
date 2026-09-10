@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { SPECIALTIES, type CoachCard } from "@/lib/coach-data";
 
-export default function CoachBrowser({ coaches }: { coaches: CoachCard[] }) {
+export default function CoachBrowser({ coaches, searchPlaceholder = "Search coaches…" }: { coaches: CoachCard[]; searchPlaceholder?: string }) {
   const [query, setQuery] = useState("");
   const [spec, setSpec] = useState<string>("all");
 
@@ -26,14 +26,14 @@ export default function CoachBrowser({ coaches }: { coaches: CoachCard[] }) {
       <div className="relative mb-4 max-w-sm">
         <Search
           size={16}
-          className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"
+          className="absolute start-3.5 top-1/2 -translate-y-1/2 text-slate-500 rtl:-scale-x-100"
         />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search coaches…"
-          aria-label="Search coaches"
-          className="w-full rounded-xl border border-white/15 bg-white/5 py-2.5 pl-10 pr-4 text-sm outline-none placeholder:text-slate-500 focus:border-brand-500"
+          placeholder={searchPlaceholder}
+          aria-label={searchPlaceholder}
+          className="w-full rounded-xl border border-white/15 bg-white/5 py-2.5 ps-10 pe-4 text-sm outline-none placeholder:text-slate-500 focus:border-brand-500"
         />
       </div>
 
@@ -88,7 +88,7 @@ export default function CoachBrowser({ coaches }: { coaches: CoachCard[] }) {
                   </div>
                 </div>
                 <span
-                  className={`ml-auto shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                  className={`ms-auto shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${
                     c.freeConsult
                       ? "bg-green-500/15 text-green-400"
                       : "bg-orange-500/15 text-orange-400"

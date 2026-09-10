@@ -17,7 +17,7 @@ export default async function CoachSchedulePage() {
     ? items.map((a) => ({
         id: a.id,
         clientName: a.clientName,
-        clientId: "",
+        clientId: a.clientId,
         date: a.date,
         startTime: a.startTime,
         endTime: a.endTime,

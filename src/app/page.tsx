@@ -10,6 +10,7 @@ import {
 import Hero from "@/components/hero";
 import Reveal from "@/components/reveal";
 import SiteHeader from "@/components/site-header";
+import { getLocale } from "@/lib/i18n";
 
 const coachFeatures = [
   {
@@ -55,41 +56,85 @@ const marquee = [
   "Offline mode",
 ];
 
-const tiers = [
+const tiersEn = [
   {
-    name: "Starter",
+    name: "Solo",
     price: "Free",
-    pitch: "Solo coaches testing the waters.",
+    per: "",
+    pitch: "Train on your own and track your progress with no coach.",
     cta: "Start free",
-    features: ["Up to 5 clients", "Workout programs", "Client messaging", "PWA mobile app"],
+    href: "/register",
+    features: ["Your own workouts", "Log weight and progress", "Meal and water logs", "Free forever"],
   },
   {
-    name: "Coach Pro",
-    price: "$19",
-    pitch: "Working coaches growing their roster.",
-    cta: "Go Pro",
+    name: "With a coach",
+    price: "Per weeks",
+    per: "4 / 8 / 12 … up to 52",
+    pitch: "You pay your coach directly. Starts when your coach sends your first plan.",
+    cta: "Find a coach",
+    href: "/coaches",
     hot: true,
     features: [
-      "Unlimited clients",
-      "Nutrition plans + adherence",
-      "Progress analytics",
-      "Session scheduling",
-      "Priority support",
+      "Training + nutrition plan from your coach",
+      "WhatsApp contact with your coach",
+      "Ongoing progress tracking",
+      "History kept and shareable",
     ],
   },
   {
-    name: "Gym",
-    price: "Custom",
-    pitch: "Gyms and teams of coaches.",
-    cta: "Talk to us",
-    features: ["Multi-coach workspace", "Admin console", "Content library", "Onboarding help"],
+    name: "History unlock",
+    price: "Per weeks",
+    per: "After expiry",
+    pitch: "Coach subscription ended? Unlock old plans read-only and keep training solo.",
+    cta: "See pricing",
+    href: "/pricing",
+    features: ["Read your past plans", "No coach tracking", "Back to free solo mode", "Re-subscribe anytime"],
   },
 ];
 
-export default function Home() {
+const tiersAr = [
+  {
+    name: "وحدك",
+    price: "مجاناً",
+    per: "",
+    pitch: "تدرّب لحسابك وتابع تقدمك بدون مدرب.",
+    cta: "ابدأ مجاناً",
+    href: "/register",
+    features: ["تمارينك الخاصة", "تسجيل القياسات والتقدم", "سجل الوجبات والماء", "تطبيق مجاني"],
+  },
+  {
+    name: "مع مدرب",
+    price: "بالأسابيع",
+    per: "4 / 8 / 12 … حتى 52",
+    pitch: "تدفع لمدربك مباشرة. يبدأ اشتراكك عندما يرسل مدربك أول خطة.",
+    cta: "اعثر على مدرب",
+    href: "/coaches",
+    hot: true,
+    features: [
+      "خطة تمارين وتغذية من مدربك",
+      "تواصل واتساب مع المدرب",
+      "متابعة تقدمك أولاً بأول",
+      "سجلّك محفوظ ويمكن مشاركته",
+    ],
+  },
+  {
+    name: "فتح السجل",
+    price: "بالأسابيع",
+    per: "بعد انتهاء الاشتراك",
+    pitch: "انتهى اشتراكك مع المدرب؟ افتح خططك القديمة للقراءة فقط وواصل وحدك.",
+    cta: "شاهد الأسعار",
+    href: "/pricing",
+    features: ["قراءة خططك السابقة", "بدون متابعة من المدرب", "ارجع لوضعك المجاني", "جدّد مع أي مدرب متى شئت"],
+  },
+];
+
+export default async function Home() {
+  const locale = await getLocale();
+  const ar = locale === "ar";
+  const tiers = ar ? tiersAr : tiersEn;
   return (
     <div className="min-h-screen bg-ink-950 text-slate-100">
-      <SiteHeader />
+      <SiteHeader locale={locale} />
       <main>
         <Hero />
 
@@ -195,9 +240,9 @@ export default function Home() {
         {/* pricing */}
         <section id="pricing" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-20 sm:px-6 lg:px-8">
           <Reveal className="text-center">
-            <p className="text-sm font-bold uppercase tracking-widest text-brand-400">Pricing</p>
+            <p className="text-sm font-bold uppercase tracking-widest text-brand-400">{ar ? "الأسعار" : "Pricing"}</p>
             <h2 className="mx-auto mt-3 max-w-xl text-3xl font-extrabold tracking-tight sm:text-4xl">
-              Start free. Grow when you grow.
+              {ar ? "ابدأ مجاناً. ادفع لمدربك عندما تكون جاهزاً." : "Start free. Pay your coach when you're ready."}
             </h2>
           </Reveal>
           <div className="mt-12 grid grid-cols-1 gap-5 md:grid-cols-3">
@@ -212,16 +257,12 @@ export default function Home() {
                 >
                   {t.hot && (
                     <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-brand-500 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">
-                      Most popular
+                      {ar ? "الأكثر اختياراً" : "Most popular"}
                     </span>
                   )}
                   <h3 className="text-lg font-bold">{t.name}</h3>
-                  <p className="mt-1 text-3xl font-extrabold">
-                    {t.price}
-                    {t.price.startsWith("$") && (
-                      <span className="text-base font-medium text-slate-400">/mo</span>
-                    )}
-                  </p>
+                  <p className="mt-1 text-3xl font-extrabold">{t.price}</p>
+                  {t.per && <p className="mt-1 text-sm font-semibold text-brand-400">{t.per}</p>}
                   <p className="mt-2 text-sm text-slate-400">{t.pitch}</p>
                   <ul className="mt-5 space-y-2.5">
                     {t.features.map((f) => (
@@ -232,7 +273,7 @@ export default function Home() {
                     ))}
                   </ul>
                   <a
-                    href="/register"
+                    href={t.href}
                     className={`mt-6 flex items-center justify-center gap-1.5 rounded-full py-3 text-sm font-semibold transition-all ${
                       t.hot
                         ? "bg-brand-500 text-white hover:bg-brand-400"
@@ -240,7 +281,7 @@ export default function Home() {
                     }`}
                   >
                     {t.cta}
-                    <ArrowRight size={15} />
+                    <ArrowRight size={15} className="rtl:-scale-x-100" />
                   </a>
                 </div>
               </Reveal>

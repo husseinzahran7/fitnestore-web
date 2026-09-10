@@ -24,6 +24,10 @@ const PASSWORD = "Test1234!";
 
 export default function DemoLogins() {
   const [copied, setCopied] = useState<string | null>(null);
+  // Test-account panel stays hidden unless explicitly enabled.
+  // Set NEXT_PUBLIC_SHOW_DEMO_LOGINS=true in .env.local for local QA
+  // or preview deploys. Production login never advertises accounts.
+  if (process.env.NEXT_PUBLIC_SHOW_DEMO_LOGINS !== "true") return null;
 
   const fill = (email: string) => {
     const emailEl = document.getElementById("email") as HTMLInputElement | null;

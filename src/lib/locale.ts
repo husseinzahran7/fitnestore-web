@@ -1,6 +1,11 @@
 export type Locale = "en" | "ar";
 export const LOCALES: Locale[] = ["en", "ar"];
 
+export const LOCALE_LABEL: Record<Locale, string> = {
+  en: "English",
+  ar: "العربية",
+};
+
 const dict = {
   en: {
     dir: "ltr" as const,
@@ -17,8 +22,17 @@ const dict = {
       coaches: "Coaches",
       policies: "Policies",
       users: "Users",
+      subscriptions: "Subscriptions",
     },
     auth: { signIn: "Sign in", signOut: "Logout", search: "Search…" },
+    locale: {
+      label: "Language",
+      current: "English",
+      english: "English",
+      arabic: "العربية",
+      switchToArabic: "Switch to Arabic",
+      switchToEnglish: "Switch to English",
+    },
     pages: {
       hey: "Hey",
       letsTrain: "— let's train.",
@@ -37,6 +51,35 @@ const dict = {
       previewSchedule: " • preview data (connect Supabase for live schedule)",
       previewProgress: " • preview data (log metrics with your coach for live charts)",
     },
+    coaches: {
+      search: "Search coaches…",
+      whatsapp: "Chat on WhatsApp",
+      requestFree: "Request free consult",
+      requestPaid: "Request paid session",
+      whatsappNote: "WhatsApp opens outside the app. Requests are also tracked for your coach.",
+      goalPlaceholder: "Goal in a sentence (optional)…",
+    },
+    subs: {
+      weeks: "weeks",
+      week: "week",
+      activeUntil: "Active until",
+      expired: "Expired",
+      lockedTitle: "Coach plan locked",
+      lockedBody: "Renew with your coach to unlock the full plan, or unlock read-only history via an app subscription.",
+      renewCoach: "Renew with coach",
+      unlockApp: "Unlock history via app",
+      soloNote: "Training solo — your own workouts, free.",
+      startsOnSend: "Starts when your coach sends your first plan.",
+    },
+    admin: {
+      subscriptions: "Subscriptions",
+      activateLink: "Activate coach link",
+      trainee: "Trainee (email or user ID)",
+      coach: "Coach (user ID)",
+      weeksLabel: "Weeks (1–52)",
+      paymentRef: "Payment note (offline)",
+      activate: "Activate",
+    },
   },
   ar: {
     dir: "rtl" as const,
@@ -53,8 +96,17 @@ const dict = {
       coaches: "المدربون",
       policies: "السياسات",
       users: "المستخدمون",
+      subscriptions: "الاشتراكات",
     },
     auth: { signIn: "تسجيل الدخول", signOut: "تسجيل الخروج", search: "ابحث…" },
+    locale: {
+      label: "اللغة",
+      current: "العربية",
+      english: "English",
+      arabic: "العربية",
+      switchToArabic: "التبديل إلى العربية",
+      switchToEnglish: "التبديل إلى الإنجليزية",
+    },
     pages: {
       hey: "أهلاً",
       letsTrain: "— هيا نتدرب.",
@@ -72,6 +124,35 @@ const dict = {
       emptyThreads: "لا محادثات بعد — سيتواصل معك مدربك.",
       previewSchedule: " • بيانات تجريبية (اتصل بقاعدة البيانات للبث المباشر)",
       previewProgress: " • بيانات تجريبية (سجل القياسات مع مدربك للرسوم المباشرة)",
+    },
+    coaches: {
+      search: "ابحث عن مدرب…",
+      whatsapp: "تحدث واتساب",
+      requestFree: "اطلب استشارة مجانية",
+      requestPaid: "اطلب حصة مدفوعة",
+      whatsappNote: "واتساب يفتح خارج التطبيق. الطلبات تُسجَّل لمدربك أيضاً.",
+      goalPlaceholder: "هدفك بجملة (اختياري)…",
+    },
+    subs: {
+      weeks: "أسابيع",
+      week: "أسبوع",
+      activeUntil: "نشط حتى",
+      expired: "منتهي",
+      lockedTitle: "خطة المدرب مقفلة",
+      lockedBody: "جدّد مع مدربك لفتح الخطة كاملة، أو افتح السجل للقراءة فقط عبر اشتراك التطبيق.",
+      renewCoach: "التجديد مع المدرب",
+      unlockApp: "فتح السجل عبر التطبيق",
+      soloNote: "تتدرب وحدك — تمارينك الخاصة، مجاناً.",
+      startsOnSend: "يبدأ عند إرسال مدربك أول خطة.",
+    },
+    admin: {
+      subscriptions: "الاشتراكات",
+      activateLink: "تفعيل ربط مدرب",
+      trainee: "المتدرب (بريد أو معرّف)",
+      coach: "المدرب (معرّف)",
+      weeksLabel: "الأسابيع (1–52)",
+      paymentRef: "ملاحظة الدفع (خارج التطبيق)",
+      activate: "تفعيل",
     },
   },
 } satisfies Record<Locale, unknown>;

@@ -12,7 +12,6 @@ export interface TrackExercise {
 export interface TrackHistory {
   id: string;
   performedOn: string;
-  setCount: number;
 }
 
 export interface CoachLogView {
@@ -192,7 +191,6 @@ export async function getTrackSession(sessionId: string): Promise<{
       history: (logs ?? []).map((l) => ({
         id: l.id,
         performedOn: String(l.performed_on),
-        setCount: 0,
       })),
       live: true,
     };

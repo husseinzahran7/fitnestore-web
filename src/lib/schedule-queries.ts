@@ -42,6 +42,15 @@ export async function getUserScheduleWeek(): Promise<{
         sessions.map((s) => s.id)
       );
 
+    // Done means logged today (sessions repeat weekly; history owns past).
+    const today = new Date().toISOString().slice(0, 10);
+    const { data: doneLogs } = await supabase
+      .from("workout_logs")
+      .select("session_id")
+      .eq("client_id", client.id)
+      .eq("performed_on", today);
+    const done = new Set((doneLogs ?? []).map((l) => l.session_id));
+
     const bySession = new Map<string, typeof exercises>();
     for (const e of exercises ?? []) {
       const arr = bySession.get(e.session_id) ?? [];
@@ -59,7 +68,7 @@ export async function getUserScheduleWeek(): Promise<{
         day: String(s.day ?? ""),
         time: String(s.time ?? ""),
         duration: String(s.duration ?? ""),
-        completed: false,
+        completed: done.has(s.id),
         description: String(s.description ?? ""),
         exercises: (bySession.get(s.id) ?? []).map((e) => ({
           name: e.name,

@@ -3,23 +3,40 @@ import { ArrowRight } from "lucide-react";
 import { createClient, getViewer } from "@/lib/supabase/server";
 
 async function coachStats() {
+  type Recent = { id: string; name: string; plan: string; status: string };
+  const empty = { total: 0, active: 0, recent: [] as Recent[] };
   try {
     const supabase = await createClient();
     const viewer = await getViewer();
-    if (!viewer) return { total: 0, active: 0, recent: [] as Array<{ id: string; plan: string; status: string; profile_id: string }> };
+    if (!viewer) return empty;
     const { data } = await supabase
       .from("clients")
       .select("id, plan, status, profile_id")
       .eq("coach_id", viewer.id)
       .order("created_at", { ascending: false });
     const rows = data ?? [];
+    const { data: profiles } = rows.length
+      ? await supabase
+          .from("profiles")
+          .select("id, name")
+          .in(
+            "id",
+            rows.map((r) => r.profile_id)
+          )
+      : { data: [] };
+    const names = new Map((profiles ?? []).map((p) => [p.id, p.name]));
     return {
       total: rows.length,
       active: rows.filter((r) => r.status === "active").length,
-      recent: rows.slice(0, 5),
+      recent: rows.slice(0, 5).map((r) => ({
+        id: r.id,
+        name: (names.get(r.profile_id) as string) ?? "Client",
+        plan: r.plan,
+        status: r.status,
+      })),
     };
   } catch {
-    return { total: 0, active: 0, recent: [] as Array<{ id: string; plan: string; status: string; profile_id: string }> };
+    return empty;
   }
 }
 
@@ -68,7 +85,7 @@ export default async function CoachDashboard() {
           <ul className="mt-4 divide-y divide-white/10">
             {stats.recent.map((c) => (
               <li key={c.id} className="flex items-center justify-between py-3">
-                <span className="text-sm font-medium">Client {c.id.slice(0, 8)}</span>
+                <span className="text-sm font-medium">{c.name}</span>
                 <span className="text-xs text-slate-400">
                   {c.plan} • {c.status}
                 </span>

@@ -27,16 +27,13 @@ export async function logWeight(
   if (!user) return { error: "You're signed out. Sign in again." };
   if (!(await requireActive())) return { error: "Account suspended." };
 
-  const { data: client } = await supabase
-    .from("clients")
-    .select("id")
-    .eq("profile_id", user.id)
-    .single();
-  if (!client) return { error: "No client record found." };
+  const { ensureMyClientId } = await import("@/lib/ensure-client");
+  const clientId = await ensureMyClientId(supabase, user.id);
+  if (!clientId) return { error: "No client record found." };
 
   // Owner self-insert covered by "body_metrics owner insert" policy.
   const { error } = await supabase.from("body_metrics").insert({
-    client_id: client.id,
+    client_id: clientId,
     weight,
   });
   if (error) return { error: "Couldn't save. Try again." };
@@ -63,16 +60,13 @@ export async function submitCheckin(
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
   if (!(await requireActive())) return { error: "Account suspended." };
-  const { data: client } = await supabase
-    .from("clients")
-    .select("id")
-    .eq("profile_id", user.id)
-    .single();
-  if (!client) return { error: "No client record found." };
+  const { ensureMyClientId } = await import("@/lib/ensure-client");
+  const checkinClientId = await ensureMyClientId(supabase, user.id);
+  if (!checkinClientId) return { error: "No client record found." };
 
   const { error } = await supabase
     .from("check_ins")
-    .insert({ client_id: client.id, notes });
+    .insert({ client_id: checkinClientId, notes });
   if (error) return { error: "Couldn't save. Try again." };
   revalidatePath("/dashboard/progress");
   return { ok: true };

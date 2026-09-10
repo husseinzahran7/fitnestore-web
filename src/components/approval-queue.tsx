@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import CopyIdButton from "@/components/copy-id";
 import { decideApproval, type PendingCoach } from "@/lib/coaches";
 
 export default function ApprovalQueue({
@@ -40,6 +41,10 @@ export default function ApprovalQueue({
                 {c.approved ? "Approved" : "Pending"}
               </span>
               <span className="text-xs text-slate-500">{c.years} yrs</span>
+              <span className="flex items-center gap-1 font-mono text-xs text-slate-500">
+                {c.profileId.slice(0, 8)}…
+                <CopyIdButton id={c.profileId} label="Copy full coach ID" />
+              </span>
             </div>
             {c.bio && (
               <p className="mt-1 line-clamp-2 text-sm text-slate-400">{c.bio}</p>

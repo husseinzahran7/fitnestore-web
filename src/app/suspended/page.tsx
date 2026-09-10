@@ -1,11 +1,13 @@
 import SiteHeader from "@/components/site-header";
+import { getLocale } from "@/lib/i18n";
 
 export const metadata = { title: "Account suspended" };
 
-export default function SuspendedPage() {
+export default async function SuspendedPage() {
+  const locale = await getLocale();
   return (
     <div className="min-h-screen bg-ink-950 text-slate-100">
-      <SiteHeader />
+      <SiteHeader locale={locale} />
       <main className="mx-auto max-w-md px-4 pb-20 pt-32 text-center sm:px-6">
         <h1 className="text-3xl font-extrabold tracking-tight">
           Account suspended
@@ -24,3 +26,4 @@ export default function SuspendedPage() {
     </div>
   );
 }
+

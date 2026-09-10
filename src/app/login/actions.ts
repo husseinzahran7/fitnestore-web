@@ -27,7 +27,7 @@ async function homeForRole(
     return "/dashboard";
   }
   if (data.role === "coach") return "/coach";
-  if (data.role === "admin") return "/admin";
+  if (data.role === "admin" || data.role === "superadmin") return "/admin";
   return "/dashboard";
 }
 
@@ -96,7 +96,14 @@ export async function signInWithGoogle(): Promise<AuthState> {
   } catch {
     return { error: "Supabase not connected yet." };
   }
-  const origin = (await headers()).get("origin") ?? "";
+  const headersList = await headers();
+  const origin =
+    headersList.get("origin") ??
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    "";
+  if (!origin) {
+    return { error: "App URL not configured — set NEXT_PUBLIC_SITE_URL." };
+  }
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: { redirectTo: `${origin}/auth/callback` },

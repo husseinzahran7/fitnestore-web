@@ -22,6 +22,9 @@ Check off top to bottom. Nothing here needs code changes — Muse already shippe
 - [ ] Answer the 3 open questions (split tables, session_type text vs enum, client self-booking).
 - [ ] Tell Muse "apply 0004" — migration runs, schedule page wires live, verified in browser.
 
+my answers:
+for this we no longer use the fitnestore-hub and the app name should be GYMERS.
+
 ## 4. Real-phone QA (after deploy link exists)
 
 - [ ] Open link on iPhone Safari + Android Chrome. Add to Home Screen, open standalone.

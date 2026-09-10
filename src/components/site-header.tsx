@@ -4,6 +4,8 @@ import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import AuthLinks from "@/components/auth-links";
+import LocaleToggle from "@/components/locale-toggle";
+import type { Locale } from "@/lib/locale";
 
 const links = [
   { label: "Coaches", href: "#coaches" },
@@ -12,7 +14,7 @@ const links = [
   { label: "Find a coach", href: "/coaches" },
 ];
 
-export default function SiteHeader() {
+export default function SiteHeader({ locale = "en" }: { locale?: Locale }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -37,17 +39,21 @@ export default function SiteHeader() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-3 md:flex">
+        <div className="hidden items-center gap-1 md:flex">
+          <LocaleToggle current={locale} />
           <AuthLinks />
         </div>
 
-        <button
-          className="rounded-lg p-2 text-slate-200 hover:bg-white/10 md:hidden"
-          onClick={() => setOpen(!open)}
-          aria-label={open ? "Close menu" : "Open menu"}
-        >
-          {open ? <X size={22} /> : <Menu size={22} />}
-        </button>
+        <div className="flex items-center gap-1 md:hidden">
+          <LocaleToggle current={locale} />
+          <button
+            className="rounded-lg p-2 text-slate-200 hover:bg-white/10"
+            onClick={() => setOpen(!open)}
+            aria-label={open ? "Close menu" : "Open menu"}
+          >
+            {open ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </div>
 
       <AnimatePresence>

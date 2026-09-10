@@ -45,18 +45,15 @@ export async function saveWorkout(
   if (!user) return { error: "You're signed out. Sign in again." };
   if (!(await requireActive())) return { error: "Account suspended." };
 
-  const { data: client } = await supabase
-    .from("clients")
-    .select("id")
-    .eq("profile_id", user.id)
-    .single();
-  if (!client) return { error: "No client record found." };
+  const { ensureMyClientId } = await import("@/lib/ensure-client");
+  const clientId = await ensureMyClientId(supabase, user.id);
+  if (!clientId) return { error: "No client record found." };
 
   const { data: session } = await supabase
     .from("workout_sessions")
     .select("id")
     .eq("id", sessionId)
-    .eq("client_id", client.id)
+    .eq("client_id", clientId)
     .single();
   if (!session) return { error: "Session not found." };
 
@@ -79,7 +76,7 @@ export async function saveWorkout(
       const w = s.weight.trim() === "" ? null : Number(s.weight);
       const r = s.reps.trim() === "" ? null : parseInt(s.reps, 10);
       if ((w != null && (!Number.isFinite(w) || w < 0)) || (r != null && (!Number.isInteger(r) || r < 0))) {
-        throw new Error("bad-number");
+        return { error: "Weights and reps must be positive numbers." };
       }
       rows.push({
         exercise_id: ex.exerciseId,
@@ -95,7 +92,7 @@ export async function saveWorkout(
   try {
     const { data: log, error: logError } = await supabase
       .from("workout_logs")
-      .insert({ client_id: client.id, session_id: sessionId, title })
+      .insert({ client_id: clientId, session_id: sessionId, title })
       .select("id")
       .single();
     if (logError || !log) return { error: "Couldn't save. Try again." };
@@ -112,10 +109,7 @@ export async function saveWorkout(
         .update({ position: ex.position })
         .eq("id", ex.exerciseId);
     }
-  } catch (e) {
-    if (e instanceof Error && e.message === "bad-number") {
-      return { error: "Weights and reps must be positive numbers." };
-    }
+  } catch {
     return { error: "Couldn't save. Try again." };
   }
 

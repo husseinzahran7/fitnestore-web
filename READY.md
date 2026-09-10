@@ -12,6 +12,7 @@ cp .env.example .env.local   # fill NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 pnpm install
 pnpm dev                     # --webpack pinned; Turbopack crashes on PWA config
 ```
+Login demo panel needs `NEXT_PUBLIC_SHOW_DEMO_LOGINS=true` (local only).
 
 Stop it: `Ctrl+C`. Port busy? `Get-Process node | Stop-Process`.
 
@@ -44,7 +45,7 @@ Stop it: `Ctrl+C`. Port busy? `Get-Process node | Stop-Process`.
 | Admin policies + public pages | LIVE, anon-readable |
 | Superadmin users (roles, disable/enable, suspend flow) | LIVE |
 | Docs (`docs/`: architecture, roles, flows, schema) + CHANGELOG | current |
-| Client meal plans board | MOCK — rows lack dates/status/adherence columns |
+| Client meal plans board | LIVE (derived: created_at start, meal counts, checks adherence; drafts until first meal logged) |
 | Check-ins | LIVE (table 0018, both sides) |
 
 ## Schema (hub `supabase/migrations/`, mirrors prod)

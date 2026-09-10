@@ -100,7 +100,7 @@ export default function UserProgress({
 
       {tab === "measurements" && (
         <div className="mt-5 overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.03]">
-          <table className="w-full min-w-[480px] text-left text-sm">
+          <table className="w-full min-w-[480px] text-start text-sm">
             <thead>
               <tr className="border-b border-white/10 text-slate-400">
                 <th className="px-5 py-3 font-semibold">Week</th>
@@ -229,7 +229,7 @@ function PhotoUploadForm() {
           type="file"
           accept="image/jpeg,image/png,image/webp"
           required
-          className="w-full text-sm text-slate-300 file:mr-3 file:rounded-full file:border-0 file:bg-brand-500 file:px-4 file:py-2 file:text-sm file:font-bold file:text-white hover:file:bg-brand-400"
+          className="w-full text-sm text-slate-300 file:me-3 file:rounded-full file:border-0 file:bg-brand-500 file:px-4 file:py-2 file:text-sm file:font-bold file:text-white hover:file:bg-brand-400"
         />
       </div>
       <button

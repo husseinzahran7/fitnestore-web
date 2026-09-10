@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createClient, requireActive } from "@/lib/supabase/server";
 import type { Conversation } from "@/data/mockConversations";
 
@@ -27,6 +28,34 @@ export async function getConversations(
     }
     const ids = parts.map((p) => p.conversation_id);
 
+    // Other participant per thread from membership rows — message senders
+    // alone mislabel threads where one side hasn't written yet.
+    const { data: convParts } = await supabase
+      .from("conversation_participants")
+      .select("conversation_id, profile_id")
+      .in("conversation_id", ids);
+    const otherByConv = new Map<string, string>();
+    for (const cp of convParts ?? []) {
+      if (cp.profile_id !== user.id && !otherByConv.has(cp.conversation_id)) {
+        otherByConv.set(cp.conversation_id, cp.profile_id);
+      }
+    }
+    // Pending consult threads hold one member only — counterpart comes
+    // from the request row so headers never show self.
+    const { data: reqs } = await supabase
+      .from("consult_requests")
+      .select("conversation_id, coach_id, user_id")
+      .in("conversation_id", ids);
+    for (const r of reqs ?? []) {
+      if (!otherByConv.has(r.conversation_id)) {
+        const counterpart =
+          myRole === "coach" ? r.user_id : r.coach_id;
+        if (counterpart && counterpart !== user.id) {
+          otherByConv.set(r.conversation_id, counterpart);
+        }
+      }
+    }
+
     const { data: messages, error: msgError } = await supabase
       .from("messages")
       .select("id, conversation_id, sender_id, content, created_at")
@@ -36,7 +65,12 @@ export async function getConversations(
       return { conversations: [], live: false };
     }
 
-    const senderIds = [...new Set(messages.map((m) => m.sender_id))];
+    const senderIds = [
+      ...new Set([
+        ...messages.map((m) => m.sender_id),
+        ...otherByConv.values(),
+      ]),
+    ];
     const { data: profiles } = await supabase
       .from("profiles")
       .select("id, name, role")
@@ -63,8 +97,18 @@ export async function getConversations(
     const conversations: Conversation[] = [...byConv.entries()].map(
       ([convId, msgs]) => {
         const other = msgs.find((m) => m.sender_id !== user.id);
-        const otherId = other?.sender_id ?? user.id;
-        const info = who.get(otherId) ?? { name: "Coach", role: "coach" as const };
+        const rawOther =
+          otherByConv.get(convId) ?? other?.sender_id;
+        const otherId = rawOther ?? user.id;
+        // No counterpart anywhere (orphan seed thread) → generic role
+        // word, never self.
+        const fallbackRole = (myRole === "coach" ? "user" : "coach") as
+          | "user"
+          | "coach";
+        const info = (rawOther && who.get(rawOther)) ?? {
+          name: myRole === "coach" ? "Client" : "Coach",
+          role: fallbackRole,
+        };
         const last = msgs[msgs.length - 1];
         return {
           id: convId,
@@ -123,5 +167,7 @@ export async function sendMessage(
     content: text,
   });
   if (error) return { error: "Couldn't send. Try again." };
+  revalidatePath("/dashboard/messages");
+  revalidatePath("/coach/messages");
   return { ok: true };
 }

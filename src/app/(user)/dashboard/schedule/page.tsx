@@ -1,27 +1,68 @@
 import UserSchedule from "@/components/user-schedule";
+import SubLock from "@/components/sub-lock";
 import { weeklyWorkouts } from "@/data/mockWorkouts";
 import { getUserScheduleWeek } from "@/lib/schedule-queries";
 import { getUserAppointments } from "@/lib/schedule";
-import { getDict } from "@/lib/i18n";
+import { getMyAppSub, getMyLinks } from "@/lib/subscriptions";
+import { linkLive } from "@/lib/subscription-status";
+import { getDict, getLocale } from "@/lib/i18n";
 
 export default async function UserSchedulePage() {
-  const [{ week, live }, { items: appointments }, t] = await Promise.all([
+  const [{ week, live }, { items: appointments }, links, appSub, t, locale] = await Promise.all([
     getUserScheduleWeek(),
     getUserAppointments(),
+    getMyLinks(),
+    getMyAppSub(),
     getDict(),
+    getLocale(),
   ]);
+
+  const liveLink = links.find((l) => linkLive(l)) ?? null;
+  const unstarted = links.find((l) => l.status === "active" && !l.starts_at) ?? null;
+  const pendingInvite = links.find((l) => l.status === "pending") ?? null;
+  const hadCoach = links.some((l) => !!l.starts_at);
+  // NOTE: no `live` check — RLS hides expired rows, so hidden data must lock, not preview.
+  const locked = hadCoach && !liveLink && !appSub;
 
   return (
     <div>
       <h1 className="text-3xl font-extrabold tracking-tight">{t.nav.schedule}</h1>
       <p className="mt-1 text-sm text-slate-400">
         {t.pages.yourTrainingWeek}
-        {!live && t.pages.previewSchedule}
+        {liveLink?.ends_at && (
+          <span className="ms-2 rounded-full bg-green-500/15 px-2.5 py-0.5 text-xs font-bold text-green-400">
+            {t.subs.activeUntil} {new Date(liveLink.ends_at).toLocaleDateString(locale)}
+          </span>
+        )}
+        {!live && !locked && ` ${t.subs.soloNote}`}
+        {!live && !locked && t.pages.previewSchedule}
       </p>
+      {unstarted && (
+        <p className="mt-2 text-xs text-slate-500">
+          {t.subs.startsOnSend} ({unstarted.weeks} {t.subs.weeks})
+        </p>
+      )}
+      {pendingInvite && (
+        <p className="mt-2 rounded-xl border border-brand-500/30 bg-brand-500/[0.07] px-4 py-2.5 text-xs text-slate-300">
+          {locale === "ar"
+            ? `طلب ربط من ${pendingInvite.coach_name ?? "مدربك"} — يُفعَّل بعد إتمام الدفع.`
+            : `Link request from ${pendingInvite.coach_name ?? "your coach"} — activates after payment clears.`}
+        </p>
+      )}
       <div className="mt-6">
-        <UserSchedule week={live ? week : weeklyWorkouts} live={live} />
+        {locked ? (
+          <SubLock
+            title={t.subs.lockedTitle}
+            body={t.subs.lockedBody}
+            renewLabel={t.subs.renewCoach}
+            appLabel={t.subs.unlockApp}
+            soloNote={t.subs.soloNote}
+          />
+        ) : (
+          <UserSchedule week={live ? week : weeklyWorkouts} live={live} />
+        )}
       </div>
-      {appointments.length > 0 && (
+      {!locked && appointments.length > 0 && (
         <div className="mt-8">
           <h2 className="text-xl font-bold">Upcoming with your coach</h2>
           <ul className="mt-3 space-y-3">

@@ -8,21 +8,25 @@ import {
   mockNutritionPlans,
 } from "@/data/mockNutrition";
 import {
+  getClientMealPlans,
   getCoachClients,
   getNutritionTemplates,
 } from "@/lib/nutrition-queries";
 import { listCoachMeals, listFoods, getCoachDayOverview } from "@/lib/foods";
 
 export default async function CoachNutritionPage() {
-  // Templates read live; per-client plans stay mock — meals rows carry
-  // name/day/details only, while the board shows dates/status/adherence
-  // that have no backend columns. Wiring plans live would fabricate fields.
-  const [{ templates, live }, clients, foods, coachMeals, dayOverview] = await Promise.all([
+  // Templates + per-client plans read live from real columns only.
+  // Assigned plans (is_template=false) link clients via meals.client_id;
+  // board dates/status/adherence derive honestly (created_at, meal counts,
+  // meal_checks) — no fabricated end dates. Mock fallback only when
+  // Supabase holds zero assigned plans / unconfigured.
+  const [{ templates, live }, clients, foods, coachMeals, dayOverview, clientPlans] = await Promise.all([
     getNutritionTemplates(),
     getCoachClients(),
     listFoods(),
     listCoachMeals(),
     getCoachDayOverview(),
+    getClientMealPlans(),
   ]);
 
   return (
@@ -30,12 +34,12 @@ export default async function CoachNutritionPage() {
       <h1 className="text-3xl font-extrabold tracking-tight">Nutrition Plans</h1>
       <p className="mt-1 text-sm text-slate-400">
         Templates and per-client meal plans.
-        {!live && " • preview data (connect Supabase for live templates)"}
+        {!clientPlans.live && " • preview data (assign a template for live plans)"}
       </p>
       <div className="mt-6">
         <NutritionBoards
           templates={live ? templates : mockNutritionPlans}
-          plans={mockClientMealPlans}
+          plans={clientPlans.live ? clientPlans.plans : mockClientMealPlans}
         />
       </div>
       {live && templates.length > 0 && clients.length > 0 && (

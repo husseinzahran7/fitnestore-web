@@ -105,7 +105,7 @@ export default function TrackSession({
             >
               <div className="flex items-center justify-between gap-2">
                 <h2 className="font-bold">
-                  <span className="mr-2 text-xs font-semibold text-slate-500">
+                  <span className="me-2 text-xs font-semibold text-slate-500">
                     {pos + 1}
                   </span>
                   {ex.name}

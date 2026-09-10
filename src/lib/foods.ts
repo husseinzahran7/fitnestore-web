@@ -407,15 +407,12 @@ export async function checkMeal(
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
   if (!(await requireActive())) return { error: "Account suspended." };
-  const { data: client } = await supabase
-    .from("clients")
-    .select("id")
-    .eq("profile_id", user.id)
-    .single();
-  if (!client) return { error: "No client record found." };
+  const { ensureMyClientId } = await import("@/lib/ensure-client");
+  const checkClientId = await ensureMyClientId(supabase, user.id);
+  if (!checkClientId) return { error: "No client record found." };
 
   const { error } = await supabase.from("meal_checks").upsert(
-    { meal_id: mealId, client_id: client.id, comment },
+    { meal_id: mealId, client_id: checkClientId, comment },
     { onConflict: "meal_id,checked_on" }
   );
   if (error) return { error: "Couldn't save. Try again." };
@@ -441,14 +438,11 @@ export async function logExtra(
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
   if (!(await requireActive())) return { error: "Account suspended." };
-  const { data: client } = await supabase
-    .from("clients")
-    .select("id")
-    .eq("profile_id", user.id)
-    .single();
-  if (!client) return { error: "No client record found." };
+  const { ensureMyClientId } = await import("@/lib/ensure-client");
+  const extraClientId = await ensureMyClientId(supabase, user.id);
+  if (!extraClientId) return { error: "No client record found." };
   const { error } = await supabase.from("food_logs").insert({
-    client_id: client.id,
+    client_id: extraClientId,
     food_item_id: foodId,
     grams,
   });
@@ -474,15 +468,12 @@ export async function logWater(
   } = await supabase.auth.getUser();
   if (!user) return { error: "You're signed out. Sign in again." };
   if (!(await requireActive())) return { error: "Account suspended." };
-  const { data: client } = await supabase
-    .from("clients")
-    .select("id")
-    .eq("profile_id", user.id)
-    .single();
-  if (!client) return { error: "No client record found." };
+  const { ensureMyClientId } = await import("@/lib/ensure-client");
+  const waterClientId = await ensureMyClientId(supabase, user.id);
+  if (!waterClientId) return { error: "No client record found." };
   const { error } = await supabase
     .from("water_logs")
-    .insert({ client_id: client.id, ml });
+    .insert({ client_id: waterClientId, ml });
   if (error) return { error: "Couldn't save. Try again." };
   revalidatePath("/dashboard/nutrition");
   return { ok: true };

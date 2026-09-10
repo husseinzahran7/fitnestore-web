@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { updateProfile, type SettingsState } from "@/lib/settings-actions";
+import CopyIdButton from "@/components/copy-id";
 import type { Viewer } from "@/lib/supabase/server";
 
 export default function SettingsForm({ viewer }: { viewer: Viewer }) {
@@ -36,6 +37,15 @@ export default function SettingsForm({ viewer }: { viewer: Viewer }) {
         <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm capitalize text-slate-300">
           {viewer.role}
           {viewer.membership ? ` • ${viewer.membership}` : ""}
+        </div>
+      </div>
+      <div>
+        <span className="mb-1.5 block text-sm font-medium">
+          Your user ID <span className="font-normal text-slate-500">(share with your coach to link up)</span>
+        </span>
+        <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
+          <span className="min-w-0 flex-1 truncate font-mono text-xs text-slate-400">{viewer.id}</span>
+          <CopyIdButton id={viewer.id} label="Copy your user ID" />
         </div>
       </div>
 

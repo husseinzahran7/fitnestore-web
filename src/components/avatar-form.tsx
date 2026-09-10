@@ -33,7 +33,7 @@ export default function AvatarForm({ currentUrl }: { currentUrl: string }) {
           type="file"
           accept="image/jpeg,image/png,image/webp"
           required
-          className="w-full text-sm text-slate-300 file:mr-3 file:rounded-full file:border-0 file:bg-brand-500 file:px-4 file:py-2 file:text-sm file:font-bold file:text-white hover:file:bg-brand-400"
+          className="w-full text-sm text-slate-300 file:me-3 file:rounded-full file:border-0 file:bg-brand-500 file:px-4 file:py-2 file:text-sm file:font-bold file:text-white hover:file:bg-brand-400"
         />
         {state?.error && (
           <p role="alert" className="mt-1 text-xs text-red-400">

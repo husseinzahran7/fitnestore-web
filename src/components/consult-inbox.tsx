@@ -16,7 +16,7 @@ export default function ConsultInbox({
     <div className="mb-6 rounded-2xl border border-brand-500/30 bg-brand-500/[0.06] p-5">
       <h2 className="font-bold">
         Consult requests{" "}
-        <span className="ml-1 rounded-full bg-brand-500 px-2 py-0.5 text-xs text-white">
+        <span className="ms-1 rounded-full bg-brand-500 px-2 py-0.5 text-xs text-white">
           {requests.length}
         </span>
       </h2>

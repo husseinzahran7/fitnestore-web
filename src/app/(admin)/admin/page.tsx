@@ -3,15 +3,17 @@ import { ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 
 async function adminStats() {
+  const fallback = { users: 0, clients: 0, live: false };
   try {
     const supabase = await createClient();
-    const [{ count: users }, { count: clients }] = await Promise.all([
+    const [{ count: users, error: uErr }, { count: clients, error: cErr }] = await Promise.all([
       supabase.from("profiles").select("id", { count: "exact", head: true }),
       supabase.from("clients").select("id", { count: "exact", head: true }),
     ]);
-    return { users: users ?? 0, clients: clients ?? 0 };
+    if (uErr || cErr) return fallback;
+    return { users: users ?? 0, clients: clients ?? 0, live: true };
   } catch {
-    return { users: 0, clients: 0 };
+    return fallback;
   }
 }
 
@@ -29,7 +31,7 @@ export default async function AdminDashboard() {
         {[
           { v: String(stats.users), l: "Total users" },
           { v: String(stats.clients), l: "Client records" },
-          { v: "Live", l: "Supabase backend" },
+          { v: stats.live ? "Live" : "Offline", l: "Supabase backend" },
         ].map((s) => (
           <div
             key={s.l}
@@ -43,6 +45,7 @@ export default async function AdminDashboard() {
 
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {[
+          { href: "/admin/subscriptions", t: "Subscriptions", d: "Coach links by weeks, offline pay activation." },
           { href: "/admin/policies", t: "Policies", d: "Terms, privacy, cookies content." },
           { href: "/admin/settings", t: "Settings", d: "Platform configuration." },
         ].map((l) => (

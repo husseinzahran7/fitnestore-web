@@ -5,10 +5,15 @@ const PROTECTED_PREFIXES = ["/dashboard", "/coach", "/admin"];
 const GUEST_ONLY = ["/login", "/register"];
 
 function env(name: string): string | undefined {
-  return (
-    process.env[`NEXT_PUBLIC_SUPABASE_${name}`] ??
-    (name === "KEY" ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY : undefined)
-  );
+  if (name === "KEY") {
+    return (
+      process.env.NEXT_PUBLIC_SUPABASE_KEY ??
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+      undefined
+    );
+  }
+  return process.env[`NEXT_PUBLIC_SUPABASE_${name}`] ?? undefined;
 }
 
 export async function updateSession(request: NextRequest) {
@@ -41,7 +46,9 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
   const { pathname } = request.nextUrl;
 
-  const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
+  const isProtected = PROTECTED_PREFIXES.some(
+    (p) => pathname === p || pathname.startsWith(`${p}/`)
+  );
   if (!user && isProtected) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";

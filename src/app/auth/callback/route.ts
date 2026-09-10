@@ -37,7 +37,8 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/dashboard`);
   }
   if (profile.role === "coach") return NextResponse.redirect(`${origin}/coach`);
-  if (profile.role === "admin") return NextResponse.redirect(`${origin}/admin`);
+  if (profile.role === "admin" || profile.role === "superadmin")
+    return NextResponse.redirect(`${origin}/admin`);
   if (next !== "/") return NextResponse.redirect(`${origin}${next}`);
   return NextResponse.redirect(`${origin}/dashboard`);
 }

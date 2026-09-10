@@ -118,7 +118,7 @@ export default function FoodLibrary({
                 <button
                   type="button"
                   onClick={() => setAddingTo(addingTo === f.id ? null : f.id)}
-                  className="ml-auto text-xs font-bold text-brand-400 hover:text-brand-500"
+                  className="ms-auto text-xs font-bold text-brand-400 hover:text-brand-500"
                 >
                   + meal
                 </button>

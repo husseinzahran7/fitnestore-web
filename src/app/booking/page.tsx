@@ -1,5 +1,6 @@
 import { ArrowRight, CalendarCheck, MessageSquareText, UserCheck } from "lucide-react";
 import SiteHeader from "@/components/site-header";
+import { getLocale } from "@/lib/i18n";
 
 export const metadata = {
   title: "Book a demo",
@@ -12,10 +13,11 @@ const steps = [
   { icon: MessageSquareText, title: "Get answers", text: "Pricing, migration, onboarding — ask anything." },
 ];
 
-export default function BookingPage() {
+export default async function BookingPage() {
+  const locale = await getLocale();
   return (
     <div className="min-h-screen bg-ink-950 text-slate-100">
-      <SiteHeader />
+      <SiteHeader locale={locale} />
       <main className="mx-auto max-w-4xl px-4 pb-20 pt-28 sm:px-6">
         <p className="text-center text-sm font-bold uppercase tracking-widest text-brand-400">
           Demo
@@ -24,8 +26,8 @@ export default function BookingPage() {
           See GYMers in action
         </h1>
         <p className="mx-auto mt-3 max-w-lg text-center text-slate-400">
-          Live scheduling opens with the backend. For now, create a free
-          account and explore every role instantly.
+          No sales calls. Create a free account and explore every role
+          instantly.
         </p>
         <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {steps.map((s) => (
@@ -50,3 +52,4 @@ export default function BookingPage() {
     </div>
   );
 }
+

@@ -19,6 +19,7 @@ export interface MealPlan {
   endDate: string;
   status: 'active' | 'completed' | 'draft';
   adherenceRate?: number;
+  mealCount?: number;
 }
 
 export const mockNutritionPlans: NutritionPlan[] = [

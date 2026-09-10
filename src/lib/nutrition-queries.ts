@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import type { NutritionPlan } from "@/data/mockNutrition";
+import type { MealPlan, NutritionPlan } from "@/data/mockNutrition";
 
 export interface CoachClientLite {
   id: string;
@@ -86,5 +86,141 @@ export async function getNutritionTemplates(): Promise<{
     };
   } catch {
     return { templates: [], live: false };
+  }
+}
+
+// Live per-client plans built from real columns only:
+// nutrition_plans(id, title, created_at, is_template=false) +
+// meals(plan_id, client_id) for client linkage +
+// meal_checks(meal_id) for adherence.
+// No dates/status columns exist backend-side, so mapping stays honest:
+// startDate = plan created_at, endDate = "" (ongoing), status = draft when
+// plan holds zero meals else active, adherence = checked meals / total.
+export async function getClientMealPlans(): Promise<{
+  plans: MealPlan[];
+  live: boolean;
+}> {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { plans: [], live: false };
+
+    const { data: plans, error } = await supabase
+      .from("nutrition_plans")
+      .select("id, title, created_at")
+      .eq("is_template", false)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error || !plans || plans.length === 0) {
+      return { plans: [], live: false };
+    }
+
+    const planIds = plans.map((p) => p.id);
+    const { data: meals } = await supabase
+      .from("meals")
+      .select("id, plan_id, client_id")
+      .in("plan_id", planIds);
+    const mealRows = (meals ?? []) as Array<{
+      id: string;
+      plan_id: string;
+      client_id: string | null;
+    }>;
+    if (mealRows.length === 0) {
+      return {
+        live: true,
+        plans: plans.map((p) => ({
+          id: p.id,
+          clientName: "Unassigned",
+          clientId: "",
+          planName: p.title,
+          startDate: String(p.created_at).slice(0, 10),
+          endDate: "",
+          status: "draft" as const,
+          mealCount: 0,
+        })),
+      };
+    }
+
+    const clientIds = [
+      ...new Set(
+        mealRows.map((m) => m.client_id).filter((v): v is string => !!v)
+      ),
+    ];
+    const names = new Map<string, string>();
+    if (clientIds.length > 0) {
+      const { data: clients } = await supabase
+        .from("clients")
+        .select("id, profile_id")
+        .in("id", clientIds);
+      const profileIds = (clients ?? []).map((c) => c.profile_id);
+      if (profileIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, name")
+          .in("id", profileIds);
+        const profileNames = new Map(
+          (profiles ?? []).map((p) => [p.id, p.name])
+        );
+        for (const c of clients ?? []) {
+          names.set(
+            c.id,
+            (profileNames.get(c.profile_id) as string) ?? "Client"
+          );
+        }
+      }
+    }
+
+    const { data: checks } = await supabase
+      .from("meal_checks")
+      .select("meal_id")
+      .in(
+        "meal_id",
+        mealRows.map((m) => m.id)
+      );
+    const checkedSet = new Set((checks ?? []).map((ch) => ch.meal_id));
+
+    const groups = new Map<
+      string,
+      { planId: string; clientId: string; mealIds: string[] }
+    >();
+    for (const m of mealRows) {
+      const clientId = m.client_id ?? "";
+      const key = `${m.plan_id}::${clientId}`;
+      const g = groups.get(key) ?? {
+        planId: m.plan_id,
+        clientId,
+        mealIds: [],
+      };
+      g.mealIds.push(m.id);
+      groups.set(key, g);
+    }
+
+    const planById = new Map(plans.map((p) => [p.id, p]));
+    return {
+      live: true,
+      plans: [...groups.values()].map((g) => {
+        const plan = planById.get(g.planId)!;
+        const total = g.mealIds.length;
+        const checked = g.mealIds.filter((id) =>
+          checkedSet.has(id)
+        ).length;
+        return {
+          id: `${g.planId}::${g.clientId}`,
+          clientName: (names.get(g.clientId) as string) ?? "Client",
+          clientId: g.clientId,
+          planName: plan.title,
+          startDate: String(plan.created_at).slice(0, 10),
+          endDate: "",
+          status: "active" as const,
+          adherenceRate:
+            total > 0 ? Math.round((checked / total) * 100) : undefined,
+          mealCount: total,
+        };
+      }),
+    };
+  } catch {
+    return { plans: [], live: false };
   }
 }

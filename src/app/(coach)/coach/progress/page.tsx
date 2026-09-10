@@ -3,7 +3,7 @@ import { mockClients } from "@/data/progress/mockData";
 import { getCoachProgress } from "@/lib/progress-queries";
 
 export default async function CoachProgressPage() {
-  // Check-ins stay mock-free: no check-ins table exists, live clients show
+  // Check-ins read live from check_ins; clients without any show
   // real metrics with an honestly empty check-in list.
   const { clients, live } = await getCoachProgress();
 

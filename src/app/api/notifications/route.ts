@@ -14,7 +14,7 @@ export async function GET() {
     const home =
       viewer.role === "coach"
         ? "/coach"
-        : viewer.role === "admin"
+        : viewer.role === "admin" || viewer.role === "superadmin"
           ? "/admin"
           : "/dashboard";
     if (viewer.role === "coach") {

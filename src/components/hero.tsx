@@ -74,7 +74,7 @@ export default function Hero() {
               className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-500 px-7 py-3.5 text-base font-semibold text-white shadow-xl shadow-brand-500/30 transition-colors hover:bg-brand-400"
             >
               Start coaching free
-              <ArrowRight size={18} />
+              <ArrowRight size={18} className="rtl:-scale-x-100" />
             </motion.a>
             <motion.a
               href="#coaches"

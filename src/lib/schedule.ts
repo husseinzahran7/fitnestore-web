@@ -7,6 +7,7 @@ export type ApptState = { error?: string; ok?: boolean };
 
 export interface Appointment {
   id: string;
+  clientId: string;
   clientName: string;
   date: string;
   startTime: string;
@@ -34,6 +35,7 @@ async function myClientId(
 function toView(
   r: {
     id: string;
+    client_id?: string;
     date: string;
     start_time: string;
     end_time: string;
@@ -45,6 +47,7 @@ function toView(
 ): Appointment {
   return {
     id: r.id,
+    clientId: String(r.client_id ?? ""),
     clientName: name,
     date: String(r.date),
     startTime: String(r.start_time ?? ""),
@@ -106,10 +109,15 @@ export async function getUserAppointments(): Promise<{
     const supabase = await createClient();
     const clientId = await myClientId(supabase);
     if (!clientId) return { items: [], live: false };
+    // Trainee "upcoming" list: only upcoming sessions from today on.
+    // Past/completed history lives with the coach logs, not here.
+    const today = new Date().toISOString().slice(0, 10);
     const { data: rows, error } = await supabase
       .from("appointments")
       .select("id, coach_id, date, start_time, end_time, session_type, status, notes")
       .eq("client_id", clientId)
+      .eq("status", "upcoming")
+      .gte("date", today)
       .order("date", { ascending: true });
     if (error || !rows || rows.length === 0) return { items: [], live: false };
     const { data: profiles } = await supabase
@@ -161,6 +169,10 @@ export async function createAppointment(
   if (!(await requireActive())) return { error: "Account suspended." };
 
   // RLS coach-manage is the real gate (own rows or admin).
+  // Subscription gate first for a clear message.
+  const { coachMaySend } = await import("@/lib/subscriptions");
+  const gate = await coachMaySend(clientId);
+  if (!gate.ok) return { error: gate.error ?? "Subscription expired." };
   const { error } = await supabase.from("appointments").insert({
     coach_id: user.id,
     client_id: clientId,
@@ -171,6 +183,8 @@ export async function createAppointment(
     notes,
   });
   if (error) return { error: "Couldn't save. Try again." };
+  const { startClockForClientId } = await import("@/lib/subscriptions");
+  await startClockForClientId(clientId);
   revalidatePath("/coach/schedule");
   return { ok: true };
 }
@@ -200,33 +214,4 @@ export async function updateAppointmentStatus(
   if (error) return { error: "Couldn't save. Try again." };
   revalidatePath("/coach/schedule");
   return {};
-}
-
-export async function setAppointmentStatus(
-  _prev: ApptState,
-  formData: FormData
-): Promise<ApptState> {
-  const id = String(formData.get("id") ?? "");
-  const status = String(formData.get("status") ?? "");
-  if (!id || !["upcoming", "completed", "cancelled"].includes(status)) {
-    return { error: "Invalid request." };
-  }
-  let supabase;
-  try {
-    supabase = await createClient();
-  } catch {
-    return { error: "Supabase not connected yet." };
-  }
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "You're signed out. Sign in again." };
-  if (!(await requireActive())) return { error: "Account suspended." };
-  const { error } = await supabase
-    .from("appointments")
-    .update({ status })
-    .eq("id", id);
-  if (error) return { error: "Couldn't save. Try again." };
-  revalidatePath("/coach/schedule");
-  return { ok: true };
 }

@@ -85,7 +85,7 @@ export default function MessageThread({
           <button
             key={c.id}
             onClick={() => select(c.id)}
-            className={`flex w-full items-center gap-3 border-b border-white/5 p-4 text-left transition-colors hover:bg-white/5 ${
+            className={`flex w-full items-center gap-3 border-b border-white/5 p-4 text-start transition-colors hover:bg-white/5 ${
               c.id === activeId ? "bg-white/5" : ""
             }`}
           >

@@ -30,7 +30,7 @@ export default function AuthLinks({ mobile }: { mobile?: boolean }) {
         }
       >
         Open app
-        <ArrowRight size={16} />
+        <ArrowRight size={16} className="rtl:-scale-x-100" />
       </a>
     );
   }
@@ -54,7 +54,7 @@ export default function AuthLinks({ mobile }: { mobile?: boolean }) {
         }
       >
         Start coaching
-        <ArrowRight size={16} />
+        <ArrowRight size={16} className="rtl:-scale-x-100" />
       </a>
     </>
   );

@@ -4,10 +4,15 @@ import { cookies } from "next/headers";
 import type { Role } from "@/lib/role-home";
 
 function env(name: string): string | undefined {
-  return (
-    process.env[`NEXT_PUBLIC_SUPABASE_${name}`] ??
-    (name === "KEY" ? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY : undefined)
-  );
+  if (name === "KEY") {
+    return (
+      process.env.NEXT_PUBLIC_SUPABASE_KEY ??
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+      undefined
+    );
+  }
+  return process.env[`NEXT_PUBLIC_SUPABASE_${name}`] ?? undefined;
 }
 
 export async function createClient() {
