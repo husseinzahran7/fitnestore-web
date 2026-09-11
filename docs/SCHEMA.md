@@ -1,8 +1,9 @@
 # Schema Index
 
-Canonical migrations live in
-`fitnestore-hub/supabase/migrations/` (mirrors prod, applied in order).
-`0001` carries an order note: tables before `private.is_admin()`.
+Canonical schema lives in Supabase project `rucibulzpxzunqezlhby`,
+applied in order. (`fitnestore-hub/` retired — do not reference it.)
+TODO: export canonical migrations into `supabase/migrations/` in this repo.
+`0001` order note: create tables before `private.is_admin()`.
 
 | # | File | Adds |
 |---|---|---|
