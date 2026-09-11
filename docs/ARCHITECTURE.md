@@ -1,7 +1,8 @@
 # Architecture
 
 Next.js 16 App Router. Server Components read, Server Actions write.
-No API routes except `/api/notifications` (header bell) and
+No API routes except `/api/notifications` (header bell: itemized per
+role, polled + Realtime-subscribed) and
 `/api/appointments/[id]/ics` (calendar files).
 
 ## Layers
