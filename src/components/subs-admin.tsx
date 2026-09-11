@@ -50,8 +50,8 @@ export default function SubsAdminClient({
           </button>
         </form>
       </div>
-      {expState?.error && <p className="mt-2 text-xs text-red-400">{expState.error}</p>}
       {expState?.ok && <p className="mt-2 text-xs text-green-400">{t.admin.swept}</p>}
+      <p className="mt-2 text-xs text-slate-500">{t.admin.autoExpire}</p>
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <form action={linkAction} className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
