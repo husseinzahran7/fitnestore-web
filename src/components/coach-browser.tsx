@@ -2,9 +2,10 @@
 
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { SPECIALTIES, type CoachCard } from "@/lib/coach-data";
+import { SPECIALTIES, SPEC_LABEL, type CoachCard } from "@/lib/coach-data";
+import type { Dict } from "@/lib/locale";
 
-export default function CoachBrowser({ coaches, searchPlaceholder = "Search coaches…" }: { coaches: CoachCard[]; searchPlaceholder?: string }) {
+export default function CoachBrowser({ coaches, searchPlaceholder, t }: { coaches: CoachCard[]; searchPlaceholder?: string; t: Dict }) {
   const [query, setQuery] = useState("");
   const [spec, setSpec] = useState<string>("all");
 
@@ -48,7 +49,7 @@ export default function CoachBrowser({ coaches, searchPlaceholder = "Search coac
                 : "border border-white/15 text-slate-300 hover:bg-white/10"
             }`}
           >
-            {s}
+            {s === "all" ? t.common.all : t.coach[SPEC_LABEL[s as (typeof SPECIALTIES)[number]]]}
           </button>
         ))}
       </div>
@@ -56,8 +57,8 @@ export default function CoachBrowser({ coaches, searchPlaceholder = "Search coac
       {shown.length === 0 ? (
         <p className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-sm text-slate-400">
           {coaches.length === 0
-            ? "No approved coaches yet. Check back soon."
-            : "No coaches match your search."}
+            ? t.coaches.noCoaches
+            : t.coaches.noMatchDir}
         </p>
       ) : (
         <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -84,7 +85,7 @@ export default function CoachBrowser({ coaches, searchPlaceholder = "Search coac
                 <div className="min-w-0">
                   <div className="truncate font-bold">{c.name}</div>
                   <div className="text-xs text-slate-400">
-                    {c.years} yrs experience
+                    {c.years} {t.coach.yrs} {t.coaches.expWord}
                   </div>
                 </div>
                 <span
@@ -94,7 +95,7 @@ export default function CoachBrowser({ coaches, searchPlaceholder = "Search coac
                       : "bg-orange-500/15 text-orange-400"
                   }`}
                 >
-                  {c.freeConsult ? "Free consult" : "Paid only"}
+                  {c.freeConsult ? t.coaches.freeBadge : t.coaches.paidOnly}
                 </span>
               </div>
               {c.bio && (
@@ -107,7 +108,7 @@ export default function CoachBrowser({ coaches, searchPlaceholder = "Search coac
                       key={s}
                       className="rounded-full bg-white/10 px-2.5 py-1 text-xs text-slate-300"
                     >
-                      {s}
+                      {s in SPEC_LABEL ? t.coach[SPEC_LABEL[s as (typeof SPECIALTIES)[number]]] : s}
                     </span>
                   ))}
                 </div>

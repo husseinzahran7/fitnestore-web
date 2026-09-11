@@ -2,15 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient, getViewer } from "@/lib/supabase/server";
+import { getDict } from "@/lib/i18n";
 import { linkLive } from "@/lib/subscription-status";
 import type { AppSub, CoachLink } from "@/lib/subscription-status";
 
 export type { AppSub, CoachLink };
 
 async function requireAdmin() {
+  const t = await getDict();
   const viewer = await getViewer();
   if (!viewer || (viewer.role !== "admin" && viewer.role !== "superadmin")) {
-    return { error: "Admins only." as const };
+    return { error: t.errors.adminsOnly };
   }
   return { viewer };
 }
@@ -209,24 +211,25 @@ export async function resolveProfileId(supabase: Awaited<ReturnType<typeof creat
 export async function activateLink(_prev: SubState, formData: FormData): Promise<SubState> {
   const gate = await requireAdmin();
   if ("error" in gate) return { error: gate.error };
+  const t = await getDict();
   const weeks = parseWeeks(formData.get("weeks"));
   const traineeInput = String(formData.get("trainee") ?? "");
   const coachInput = String(formData.get("coach") ?? "");
   const paymentRef = String(formData.get("paymentRef") ?? "").trim().slice(0, 200);
-  if (!weeks) return { error: "Weeks must be 1–52." };
-  if (!traineeInput || !coachInput) return { error: "Trainee and coach are required." };
+  if (!weeks) return { error: t.errors.weeksRange };
+  if (!traineeInput || !coachInput) return { error: t.errors.inviteFields };
 
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet." };
+    return { error: t.errors.noSupabase };
   }
   const traineeId = await resolveProfileId(supabase, traineeInput);
   const coachId = await resolveProfileId(supabase, coachInput);
-  if (!traineeId) return { error: "Trainee not found — paste their user ID from Admin → Users." };
-  if (!coachId) return { error: "Coach not found — paste their user ID." };
-  if (traineeId === coachId) return { error: "Coach and trainee can't be the same." };
+  if (!traineeId) return { error: t.errors.traineeMissing };
+  if (!coachId) return { error: t.errors.coachMissingId };
+  if (traineeId === coachId) return { error: t.errors.samePair };
 
   // Ensure client row exists for FK + progress tables.
   const { data: existingClient } = await supabase
@@ -241,7 +244,7 @@ export async function activateLink(_prev: SubState, formData: FormData): Promise
       .insert({ profile_id: traineeId, coach_id: coachId, status: "pending" })
       .select("id")
       .single();
-    if (cErr || !created) return { error: "Couldn't create client record." };
+    if (cErr || !created) return { error: t.errors.noClientRow };
     clientId = created.id;
   } else {
     await supabase.from("clients").update({ coach_id: coachId }).eq("id", clientId);
@@ -273,7 +276,7 @@ export async function activateLink(_prev: SubState, formData: FormData): Promise
         activated_at: new Date().toISOString(),
       })
       .eq("id", pending.id);
-    if (error) return { error: "Couldn't activate. Try again." };
+    if (error) return { error: t.errors.cantActivate };
     revalidatePath("/admin/subscriptions");
     revalidatePath("/coach/clients");
     return { ok: true };
@@ -299,9 +302,9 @@ export async function activateLink(_prev: SubState, formData: FormData): Promise
   });
   if (error) {
     if (error.message.includes("coach_links_one_open_per_pair")) {
-      return { error: "An open link already exists for this pair." };
+      return { error: t.errors.dupLink };
     }
-    return { error: "Couldn't activate. Try again." };
+    return { error: t.errors.cantActivate };
   }
   revalidatePath("/admin/subscriptions");
   revalidatePath("/coach/clients");
@@ -312,14 +315,15 @@ export async function activateLink(_prev: SubState, formData: FormData): Promise
 export async function activatePendingLink(_prev: SubState, formData: FormData): Promise<SubState> {
   const gate = await requireAdmin();
   if ("error" in gate) return { error: gate.error };
+  const t = await getDict();
   const id = String(formData.get("id") ?? "");
   const weeks = parseWeeks(formData.get("weeks")) ?? 4;
-  if (!id) return { error: "Invalid request." };
+  if (!id) return { error: t.errors.invalid };
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet." };
+    return { error: t.errors.noSupabase };
   }
   const { data: link } = await supabase
     .from("coach_links")
@@ -327,7 +331,7 @@ export async function activatePendingLink(_prev: SubState, formData: FormData): 
     .eq("id", id)
     .eq("status", "pending")
     .single();
-  if (!link) return { error: "Pending request not found." };
+  if (!link) return { error: t.errors.requestMissing };
 
   const { data: existingClient } = await supabase
     .from("clients")
@@ -341,7 +345,7 @@ export async function activatePendingLink(_prev: SubState, formData: FormData): 
       .insert({ profile_id: link.trainee_id, coach_id: link.coach_id, status: "pending" })
       .select("id")
       .single();
-    if (cErr || !created) return { error: "Couldn't create client record." };
+    if (cErr || !created) return { error: t.errors.noClientRow };
     clientId = created.id;
   } else {
     await supabase.from("clients").update({ coach_id: link.coach_id }).eq("id", clientId);
@@ -359,7 +363,7 @@ export async function activatePendingLink(_prev: SubState, formData: FormData): 
       activated_at: new Date().toISOString(),
     })
     .eq("id", id);
-  if (error) return { error: "Couldn't activate. Try again." };
+  if (error) return { error: t.errors.cantActivate };
   revalidatePath("/admin/subscriptions");
   revalidatePath("/coach/clients");
   return { ok: true };
@@ -368,19 +372,20 @@ export async function activatePendingLink(_prev: SubState, formData: FormData): 
 /** Coach: invite a trainee by user ID (or exact name). Admin activates after offline pay. */
 export async function inviteTrainee(_prev: SubState, formData: FormData): Promise<SubState> {
   const viewer = await getViewer();
-  if (!viewer || viewer.role !== "coach") return { error: "Coaches only." };
+  const t = await getDict();
+  if (!viewer || viewer.role !== "coach") return { error: t.errors.coachesOnly };
   const weeks = parseWeeks(formData.get("weeks")) ?? 4;
   const traineeInput = String(formData.get("trainee") ?? "").trim();
-  if (!traineeInput) return { error: "Trainee user ID is required." };
+  if (!traineeInput) return { error: t.errors.traineeIdNeeded };
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet." };
+    return { error: t.errors.noSupabase };
   }
   const traineeId = await resolveProfileId(supabase, traineeInput);
-  if (!traineeId) return { error: "Trainee not found — ask them for their user ID (Settings page)." };
-  if (traineeId === viewer.id) return { error: "You can't invite yourself." };
+  if (!traineeId) return { error: t.errors.traineeAsk };
+  if (traineeId === viewer.id) return { error: t.errors.selfInvite };
   const { error } = await supabase.from("coach_links").insert({
     coach_id: viewer.id,
     trainee_id: traineeId,
@@ -392,9 +397,9 @@ export async function inviteTrainee(_prev: SubState, formData: FormData): Promis
   });
   if (error) {
     if (error.message.includes("coach_links_one_open_per_pair")) {
-      return { error: "An open request already exists for this trainee." };
+      return { error: t.errors.dupInvite };
     }
-    return { error: "Couldn't send invite. Try again." };
+    return { error: t.errors.cantInvite };
   }
   revalidatePath("/coach/clients");
   return { ok: true };
@@ -403,29 +408,31 @@ export async function inviteTrainee(_prev: SubState, formData: FormData): Promis
 export async function setLinkStatus(_prev: SubState, formData: FormData): Promise<SubState> {
   const gate = await requireAdmin();
   if ("error" in gate) return { error: gate.error };
+  const t = await getDict();
   const id = String(formData.get("id") ?? "");
   const status = String(formData.get("status") ?? "");
-  if (!id || !["expired", "revoked", "active"].includes(status)) return { error: "Invalid request." };
+  if (!id || !["expired", "revoked", "active"].includes(status)) return { error: t.errors.invalid };
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet." };
+    return { error: t.errors.noSupabase };
   }
   const { error } = await supabase.from("coach_links").update({ status }).eq("id", id);
-  if (error) return { error: "Couldn't save. Try again." };
+  if (error) return { error: t.errors.cantSave };
   revalidatePath("/admin/subscriptions");
   return { ok: true };
 }
 
 /** Coach: start clock on first send. sets starts_at=now, ends_at=now+weeks*7d. */
 export async function startLinkClock(linkId: string): Promise<{ started: boolean; error?: string }> {
+  const t = await getDict();
   try {
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return { started: false, error: "Signed out." };
+    if (!user) return { started: false, error: t.errors.signedOut };
     const { data: link } = await supabase
       .from("coach_links")
       .select("id, weeks, status, starts_at")
@@ -441,31 +448,32 @@ export async function startLinkClock(linkId: string): Promise<{ started: boolean
       .update({ starts_at: starts.toISOString(), ends_at: ends.toISOString() })
       .eq("id", linkId)
       .is("starts_at", null);
-    if (error) return { started: false, error: "Couldn't start clock." };
+    if (error) return { started: false, error: t.errors.clockFail };
     return { started: true };
   } catch {
-    return { started: false, error: "Supabase not connected." };
+    return { started: false, error: t.errors.noSupabase };
   }
 }
 
 /** Coach: may I send to this client? Active (started or not-yet-started) link,
  * or no link rows at all (legacy grace). Expired/revoked-only → blocked. */
 export async function coachMaySend(clientId: string): Promise<{ ok: boolean; error?: string }> {
+  const t = await getDict();
   try {
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user || !clientId) return { ok: false, error: "You're signed out. Sign in again." };
+    if (!user || !clientId) return { ok: false, error: t.errors.signedOut };
     const { data: client } = await supabase
       .from("clients")
       .select("id, coach_id, profile_id")
       .eq("id", clientId)
       .single();
-    if (!client) return { ok: false, error: "Client not found." };
+    if (!client) return { ok: false, error: t.errors.clientMissing };
     const viewer = await getViewer();
     const admin = !!viewer && (viewer.role === "admin" || viewer.role === "superadmin");
-    if (!admin && client.coach_id !== user.id) return { ok: false, error: "Not your client." };
+    if (!admin && client.coach_id !== user.id) return { ok: false, error: t.errors.notYours };
     if (admin) return { ok: true };
     const { data: links } = await supabase
       .from("coach_links")
@@ -480,11 +488,11 @@ export async function coachMaySend(clientId: string): Promise<{ ok: boolean; err
         (!l.starts_at || !l.ends_at || new Date(l.ends_at).getTime() >= now)
     );
     if (!writable) {
-      return { ok: false, error: "Subscription expired — ask admin to renew this trainee." };
+      return { ok: false, error: t.errors.subExpired };
     }
     return { ok: true };
   } catch {
-    return { ok: false, error: "Supabase not connected." };
+    return { ok: false, error: t.errors.noSupabase };
   }
 }
 
@@ -516,11 +524,12 @@ export async function coachMaySend(clientId: string): Promise<{ ok: boolean; err
 export async function expireDue(): Promise<SubState> {
   const gate = await requireAdmin();
   if ("error" in gate) return { error: gate.error };
+  const t = await getDict();
   try {
     const supabase = await createClient();
     await supabase.rpc("expire_due_links");
   } catch {
-    return { error: "Couldn't expire. Try again." };
+    return { error: t.errors.cantExpire };
   }
   revalidatePath("/admin/subscriptions");
   return { ok: true };
@@ -530,18 +539,19 @@ export async function expireDue(): Promise<SubState> {
 export async function activateAppSub(_prev: SubState, formData: FormData): Promise<SubState> {
   const gate = await requireAdmin();
   if ("error" in gate) return { error: gate.error };
+  const t = await getDict();
   const weeks = parseWeeks(formData.get("weeks"));
   const userInput = String(formData.get("user") ?? "");
   const paymentRef = String(formData.get("paymentRef") ?? "").trim().slice(0, 200);
-  if (!weeks) return { error: "Weeks must be 1–52." };
+  if (!weeks) return { error: t.errors.weeksRange };
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet." };
+    return { error: t.errors.noSupabase };
   }
   const userId = await resolveProfileId(supabase, userInput);
-  if (!userId) return { error: "User not found — paste their user ID." };
+  if (!userId) return { error: t.errors.userMissing };
   const starts = new Date();
   const ends = new Date(starts.getTime() + weeks * 7 * 24 * 3600 * 1000);
   const { error } = await supabase.from("app_subs").insert({
@@ -554,7 +564,7 @@ export async function activateAppSub(_prev: SubState, formData: FormData): Promi
     starts_at: starts.toISOString(),
     ends_at: ends.toISOString(),
   });
-  if (error) return { error: "Couldn't activate. Try again." };
+  if (error) return { error: t.errors.cantActivate };
   revalidatePath("/admin/subscriptions");
   return { ok: true };
 }

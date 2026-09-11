@@ -3,6 +3,7 @@
 import { useActionState, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import type { Client } from "@/types/client";
+import type { Dict } from "@/lib/locale";
 import { updateClientStatus } from "@/lib/client-actions";
 
 function initials(name: string) {
@@ -18,10 +19,12 @@ export default function ClientsTable({
   clients,
   live = false,
   logsBase,
+  t,
 }: {
   clients: Client[];
   live?: boolean;
   logsBase?: string;
+  t: Dict;
 }) {
   const [query, setQuery] = useState("");
 
@@ -47,15 +50,15 @@ export default function ClientsTable({
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search clients…"
-          aria-label="Search clients"
+          placeholder={t.common.searchClients}
+          aria-label={t.common.searchClients}
           className="w-full rounded-xl border border-white/15 bg-white/5 py-2.5 ps-10 pe-4 text-sm outline-none placeholder:text-slate-500 focus:border-brand-500"
         />
       </div>
 
       {filtered.length === 0 ? (
         <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-sm text-slate-400">
-          No clients match “{query}”.
+          {clients.length === 0 ? t.coach.noClientsYet : `${t.coach.noClientsMatch} “${query}”.`}
         </p>
       ) : (
         <ul className="space-y-3">
@@ -87,7 +90,7 @@ export default function ClientsTable({
                       : "bg-red-500/15 text-red-400"
                   }`}
                 >
-                  {c.isActive ? "Active" : "Inactive"}
+                  {c.isActive ? t.common.active : t.common.inactive}
                 </span>
                 {c.progress != null && (
                   <span className="flex items-center gap-2 text-xs text-slate-400">
@@ -104,13 +107,14 @@ export default function ClientsTable({
                   clientId={c.id}
                   currentStatus={c.status ?? (c.isActive ? "active" : "cancelled")}
                   live={live}
+                  t={t}
                 />
                 {logsBase && (
                   <a
                     href={`${logsBase}/${c.id}/logs`}
                     className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-300 transition-colors hover:bg-white/20 hover:text-white"
                   >
-                    Logs
+                    {t.coach.logs}
                   </a>
                 )}
               </div>
@@ -126,10 +130,12 @@ function ClientStatusToggle({
   clientId,
   currentStatus,
   live,
+  t,
 }: {
   clientId: string;
   currentStatus: string;
   live: boolean;
+  t: Dict;
 }) {
   const [state, action, isPending] = useActionState(updateClientStatus, {});
   const isActive = currentStatus === "active";
@@ -142,14 +148,14 @@ function ClientStatusToggle({
       <button
         type="submit"
         disabled={!live || isPending}
-        title={!live ? "Connect Supabase for live writes" : undefined}
+        title={!live ? t.coach.connectLive : undefined}
         className={`rounded-full px-3 py-1 text-xs font-semibold transition-colors disabled:opacity-50 ${
           isActive
             ? "bg-red-500/15 text-red-400 hover:bg-red-500/25"
             : "bg-green-500/15 text-green-400 hover:bg-green-500/25"
         }`}
       >
-        {isPending ? "Saving..." : isActive ? "Deactivate" : "Activate"}
+        {isPending ? t.common.saving : isActive ? t.coach.deactivate : t.coach.activate}
       </button>
       {state?.error && (
         <span className="text-xs text-red-400">{state.error}</span>

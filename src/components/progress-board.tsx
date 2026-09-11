@@ -12,23 +12,25 @@ import {
   YAxis,
 } from "recharts";
 import type { Client, MetricType } from "@/data/progress/types";
-
-const METRICS: Array<{ key: MetricType; label: string; color: string }> = [
-  { key: "weight", label: "Weight", color: "#0080ff" },
-  { key: "bodyFat", label: "Body fat", color: "#22c55e" },
-  { key: "strength", label: "Strength", color: "#f59e0b" },
-  { key: "endurance", label: "Endurance", color: "#a855f7" },
-];
+import type { Dict } from "@/lib/locale";
 
 export default function ProgressBoard({
   clients,
   live = false,
+  t,
 }: {
   clients: Client[];
   live?: boolean;
+  t: Dict;
 }) {
   const [clientId, setClientId] = useState(clients[0]?.id ?? "");
   const [metric, setMetric] = useState<MetricType>("weight");
+  const METRICS: Array<{ key: MetricType; label: string; color: string }> = [
+    { key: "weight", label: t.coach.metricWeight, color: "#0080ff" },
+    { key: "bodyFat", label: t.coach.metricBodyFat, color: "#22c55e" },
+    { key: "strength", label: t.coach.metricStrength, color: "#f59e0b" },
+    { key: "endurance", label: t.coach.metricEndurance, color: "#a855f7" },
+  ];
 
   const client = useMemo(
     () => clients.find((c) => c.id === clientId) ?? clients[0],
@@ -38,7 +40,7 @@ export default function ProgressBoard({
   if (!client) {
     return (
       <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-sm text-slate-400">
-        No progress data yet.
+        {t.coach.noProgressData}
       </p>
     );
   }
@@ -66,7 +68,7 @@ export default function ProgressBoard({
       <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-4">
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-center">
           <div className="text-3xl font-extrabold">{client.progress}%</div>
-          <div className="mt-1 text-sm text-slate-400">Overall</div>
+          <div className="mt-1 text-sm text-slate-400">{t.coach.overall}</div>
         </div>
         {client.goals.slice(0, 3).map((g) => (
           <div
@@ -125,9 +127,9 @@ export default function ProgressBoard({
         </div>
       </div>
 
-      <h2 className="mt-8 text-lg font-bold">Log metrics</h2>
-      {live && client && <MetricLogForm key={client.id} clientId={client.id} />}
-      <h2 className="mt-8 text-lg font-bold">Check-ins</h2>
+      <h2 className="mt-8 text-lg font-bold">{t.coach.logMetrics}</h2>
+      {live && client && <MetricLogForm key={client.id} clientId={client.id} t={t} />}
+      <h2 className="mt-8 text-lg font-bold">{t.coach.checkInsTitle}</h2>
       <div className="mt-3 space-y-3">
         {client.checkIns.map((c) => (
           <div
@@ -143,7 +145,7 @@ export default function ProgressBoard({
                     : "bg-orange-500/15 text-orange-400"
                 }`}
               >
-                {c.completed ? "Done" : "Pending"}
+                {c.completed ? t.common.done : t.common.pending}
               </span>
             </div>
             <p className="mt-1.5 text-sm text-slate-300">{c.notes}</p>
@@ -154,7 +156,7 @@ export default function ProgressBoard({
   );
 }
 
-function MetricLogForm({ clientId }: { clientId: string }) {
+function MetricLogForm({ clientId, t }: { clientId: string; t: Dict }) {
   const [state, action, pending] = useActionState(logClientMetric, {});
 
   return (
@@ -165,7 +167,7 @@ function MetricLogForm({ clientId }: { clientId: string }) {
       <input type="hidden" name="clientId" value={clientId} />
       <div className="flex-1">
         <label htmlFor={`weight-${clientId}`} className="mb-1.5 block text-sm font-medium">
-          Weight (kg)
+          {t.coach.weightKg}
         </label>
         <input
           id={`weight-${clientId}`}
@@ -179,7 +181,7 @@ function MetricLogForm({ clientId }: { clientId: string }) {
       </div>
       <div className="flex-1">
         <label htmlFor={`bodyFat-${clientId}`} className="mb-1.5 block text-sm font-medium">
-          Body fat (%)
+          {t.coach.bodyFatPct}
         </label>
         <input
           id={`bodyFat-${clientId}`}
@@ -196,7 +198,7 @@ function MetricLogForm({ clientId }: { clientId: string }) {
         disabled={pending}
         className="rounded-full bg-brand-500 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-brand-400 disabled:opacity-60"
       >
-        {pending ? "Saving…" : "Log"}
+        {pending ? t.common.saving : t.coach.logBtn}
       </button>
       {state?.error && (
         <p role="alert" className="text-xs text-red-400 sm:self-center">
@@ -205,7 +207,7 @@ function MetricLogForm({ clientId }: { clientId: string }) {
       )}
       {state?.ok && (
         <p role="status" className="text-xs text-green-400 sm:self-center">
-          Saved.
+          {t.common.saved}
         </p>
       )}
     </form>

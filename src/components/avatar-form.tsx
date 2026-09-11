@@ -2,8 +2,9 @@
 
 import { useActionState } from "react";
 import { uploadAvatar } from "@/lib/coaches";
+import type { Dict } from "@/lib/locale";
 
-export default function AvatarForm({ currentUrl }: { currentUrl: string }) {
+export default function AvatarForm({ currentUrl, t }: { currentUrl: string; t: Dict }) {
   const [state, action, pending] = useActionState(uploadAvatar, {});
 
   return (
@@ -15,7 +16,7 @@ export default function AvatarForm({ currentUrl }: { currentUrl: string }) {
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={currentUrl}
-          alt="Profile photo"
+          alt={t.coach.photoAlt}
           className="h-16 w-16 shrink-0 rounded-full object-cover"
         />
       ) : (
@@ -25,7 +26,7 @@ export default function AvatarForm({ currentUrl }: { currentUrl: string }) {
       )}
       <div className="min-w-0 flex-1">
         <label htmlFor="avatar" className="mb-1.5 block text-sm font-medium">
-          Profile photo (JPEG/PNG/WebP, max 2 MB)
+          {t.coach.photoLabel}
         </label>
         <input
           id="avatar"
@@ -42,7 +43,7 @@ export default function AvatarForm({ currentUrl }: { currentUrl: string }) {
         )}
         {state?.ok && (
           <p role="status" className="mt-1 text-xs text-green-400">
-            Uploaded.
+            {t.coach.uploaded}
           </p>
         )}
       </div>
@@ -51,7 +52,7 @@ export default function AvatarForm({ currentUrl }: { currentUrl: string }) {
         disabled={pending}
         className="shrink-0 rounded-full bg-brand-500 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-brand-400 disabled:opacity-60"
       >
-        {pending ? "Uploading…" : "Upload"}
+        {pending ? t.coach.uploading : t.coach.uploadBtn}
       </button>
     </form>
   );

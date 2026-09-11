@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
+import { getDict } from "@/lib/i18n";
 
 async function adminStats() {
   const fallback = { users: 0, clients: 0, live: false };
@@ -18,20 +19,20 @@ async function adminStats() {
 }
 
 export default async function AdminDashboard() {
-  const stats = await adminStats();
+  const [stats, t] = await Promise.all([adminStats(), getDict()]);
 
   return (
     <div>
-      <h1 className="text-3xl font-extrabold tracking-tight">Admin Dashboard</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight">{t.nav.dashboard}</h1>
       <p className="mt-1 text-sm text-slate-400">
-        Platform health and management shortcuts.
+        {t.admin.homeDesc}
       </p>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         {[
-          { v: String(stats.users), l: "Total users" },
-          { v: String(stats.clients), l: "Client records" },
-          { v: stats.live ? "Live" : "Offline", l: "Supabase backend" },
+          { v: String(stats.users), l: t.admin.totalUsers },
+          { v: String(stats.clients), l: t.admin.clientRecords },
+          { v: stats.live ? t.common.online : t.common.offline, l: "Supabase backend" },
         ].map((s) => (
           <div
             key={s.l}
@@ -45,9 +46,9 @@ export default async function AdminDashboard() {
 
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {[
-          { href: "/admin/subscriptions", t: "Subscriptions", d: "Coach links by weeks, offline pay activation." },
-          { href: "/admin/policies", t: "Policies", d: "Terms, privacy, cookies content." },
-          { href: "/admin/settings", t: "Settings", d: "Platform configuration." },
+          { href: "/admin/subscriptions", t: t.nav.subscriptions, d: t.admin.subsCard },
+          { href: "/admin/policies", t: t.nav.policies, d: t.admin.policiesCard },
+          { href: "/admin/settings", t: t.nav.settings, d: t.settings.platformConfig },
         ].map((l) => (
           <Link
             key={l.href}

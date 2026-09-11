@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { WeeklyWorkouts } from "@/types/workout";
+import type { Dict } from "@/lib/locale";
 
 const DAYS = [
   "monday",
@@ -13,7 +14,7 @@ const DAYS = [
   "sunday",
 ];
 
-export default function UserSchedule({ week, live = false }: { week: WeeklyWorkouts; live?: boolean }) {
+export default function UserSchedule({ week, live = false, t }: { week: WeeklyWorkouts; live?: boolean; t: Dict }) {
   const today = new Date()
     .toLocaleDateString("en-US", { weekday: "long" })
     .toLowerCase();
@@ -21,6 +22,15 @@ export default function UserSchedule({ week, live = false }: { week: WeeklyWorko
     DAYS.includes(today) ? today : "monday"
   );
   const sessions = week[day] ?? [];
+  const isEmpty = Object.values(week).every((list) => list.length === 0);
+
+  if (isEmpty) {
+    return (
+      <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-sm text-slate-400">
+        {t.coach.noSessions}
+      </p>
+    );
+  }
 
   return (
     <div>
@@ -41,7 +51,7 @@ export default function UserSchedule({ week, live = false }: { week: WeeklyWorko
       <div className="mt-5 space-y-3">
         {sessions.length === 0 && (
           <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-sm text-slate-400">
-            Rest day. Recover well.
+            {t.track.restDay}
           </p>
         )}
         {sessions.map((s) => (
@@ -59,14 +69,14 @@ export default function UserSchedule({ week, live = false }: { week: WeeklyWorko
                       : "bg-white/10 text-slate-300"
                   }`}
                 >
-                  {s.completed ? "Done" : s.time}
+                  {s.completed ? t.common.done : s.time}
                 </span>
                 {live && (
                   <a
                     href={`/dashboard/schedule/track/${s.id}`}
                     className="rounded-full bg-brand-500 px-4 py-1.5 text-xs font-bold text-white transition-colors hover:bg-brand-400"
                   >
-                    Start
+                    {t.common.start}
                   </a>
                 )}
               </div>
@@ -85,7 +95,7 @@ export default function UserSchedule({ week, live = false }: { week: WeeklyWorko
                 </li>
               ))}
               {s.exercises.length === 0 && (
-                <li className="text-sm text-slate-500">No exercises — full rest.</li>
+                <li className="text-sm text-slate-500">{t.track.noExercises}</li>
               )}
             </ul>
           </div>

@@ -3,10 +3,12 @@ import CoachBrowser from "@/components/coach-browser";
 import { listCoaches } from "@/lib/coaches";
 import { getDict, getLocale } from "@/lib/i18n";
 
-export const metadata = {
-  title: "Find a coach",
-  description: "Browse approved coaches by specialty and request a consult.",
-};
+export async function generateMetadata() {
+  const t = await getDict();
+  return {
+    title: t.coaches.dirTitle,
+  };
+}
 
 export default async function CoachesPage() {
   const [coaches, locale, t] = await Promise.all([listCoaches(), getLocale(), getDict()]);
@@ -19,15 +21,13 @@ export default async function CoachesPage() {
           {t.nav.coaches}
         </p>
         <h1 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">
-          {locale === "ar" ? "اعثر على مدربك" : "Find your coach"}
+          {t.coaches.dirTitle}
         </h1>
         <p className="mt-3 max-w-lg text-slate-400">
-          {locale === "ar"
-            ? "كل مدرب هنا معتمد على المنصة. اطلب استشارة مجانية حيث تُعرض، أو تواصل واتساب مباشرة."
-            : "Every coach here is approved on the platform. Request a free consult where offered, or chat on WhatsApp directly."}
+          {t.coaches.dirDesc}
         </p>
         <div className="mt-8">
-          <CoachBrowser coaches={coaches} searchPlaceholder={t.coaches.search} />
+          <CoachBrowser coaches={coaches} searchPlaceholder={t.coaches.search} t={t} />
         </div>
       </main>
     </div>

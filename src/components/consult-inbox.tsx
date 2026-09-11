@@ -2,11 +2,14 @@
 
 import { useActionState } from "react";
 import { decideConsult, type ConsultRequest } from "@/lib/coaches";
+import type { Dict } from "@/lib/locale";
 
 export default function ConsultInbox({
   requests,
+  t,
 }: {
   requests: ConsultRequest[];
+  t: Dict;
 }) {
   const [state, action, pending] = useActionState(decideConsult, {});
 
@@ -15,7 +18,7 @@ export default function ConsultInbox({
   return (
     <div className="mb-6 rounded-2xl border border-brand-500/30 bg-brand-500/[0.06] p-5">
       <h2 className="font-bold">
-        Consult requests{" "}
+        {t.msgs.consultRequests}{" "}
         <span className="ms-1 rounded-full bg-brand-500 px-2 py-0.5 text-xs text-white">
           {requests.length}
         </span>
@@ -43,7 +46,7 @@ export default function ConsultInbox({
                 disabled={pending}
                 className="rounded-full bg-green-500 px-4 py-1.5 text-xs font-bold text-white hover:bg-green-400 disabled:opacity-50"
               >
-                Accept
+                {t.msgs.accept}
               </button>
               <button
                 type="submit"
@@ -52,7 +55,7 @@ export default function ConsultInbox({
                 disabled={pending}
                 className="rounded-full bg-white/10 px-4 py-1.5 text-xs font-bold text-slate-300 hover:bg-white/20 disabled:opacity-50"
               >
-                Decline
+                {t.msgs.decline}
               </button>
             </div>
           </form>

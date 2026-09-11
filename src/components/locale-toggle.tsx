@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown, Languages } from "lucide-react";
 import { switchLocale } from "@/lib/locale-actions";
-import { LOCALE_LABEL, type Locale } from "@/lib/locale";
+import { dictionary, LOCALE_LABEL, type Locale } from "@/lib/locale";
 
 // NOTE: `current` must be the real locale from the server (getLocale()).
 // No client-side detection here — deriving from document.lang mismatches
@@ -11,6 +11,7 @@ import { LOCALE_LABEL, type Locale } from "@/lib/locale";
 export default function LocaleToggle({ current = "en" }: { current?: Locale }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const t = dictionary(current);
 
   useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -49,7 +50,7 @@ export default function LocaleToggle({ current = "en" }: { current?: Locale }) {
       {open && (
         <div
           role="listbox"
-          aria-label="Language"
+          aria-label={t.locale.label}
           className="absolute end-0 top-full z-50 mt-1 min-w-36 overflow-hidden rounded-xl border border-white/10 bg-ink-900 py-1 shadow-2xl shadow-black/50"
         >
           {(["en", "ar"] as Locale[]).map((loc) => {

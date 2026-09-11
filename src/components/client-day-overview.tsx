@@ -1,17 +1,20 @@
 import type { ClientDayView } from "@/lib/foods";
+import type { Dict } from "@/lib/locale";
 
 export default function ClientDayOverview({
   days,
+  t,
 }: {
   days: ClientDayView[];
+  t: Dict;
 }) {
   if (days.length === 0) return null;
 
   return (
     <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
-      <h2 className="font-bold">Today per client</h2>
+      <h2 className="font-bold">{t.coach.dayOverview}</h2>
       <p className="mt-1 text-sm text-slate-400">
-        Eaten check-ins, comments, and water — what is right and wrong at a glance.
+        {t.coach.dayOverviewDesc}
       </p>
       <div className="mt-4 space-y-3">
         {days.map((d) => (
@@ -22,7 +25,7 @@ export default function ClientDayOverview({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="font-semibold">{d.name}</span>
               <span className="text-sm text-slate-300">
-                Water:{" "}
+                {t.coach.water}:{" "}
                 <span className="font-mono font-bold text-brand-400">
                   {(d.waterMl / 1000).toFixed(2).replace(/\.?0+$/, "")} L
                 </span>
@@ -30,7 +33,7 @@ export default function ClientDayOverview({
             </div>
             {d.checked.length === 0 ? (
               <p className="mt-2 text-sm text-slate-500">
-                Nothing eaten yet today.
+                {t.coach.nothingEaten}
               </p>
             ) : (
               <ul className="mt-2 space-y-1.5 text-sm">

@@ -3,21 +3,21 @@ import InviteTraineeForm from "@/components/invite-trainee-form";
 import { createClient, getViewer } from "@/lib/supabase/server";
 import { getCoachLinks } from "@/lib/subscriptions";
 import { linkExpired } from "@/lib/subscription-status";
-import { mockClients } from "@/data/mockClients";
+import { getDict } from "@/lib/i18n";
 import type { Client } from "@/types/client";
 
 async function loadClients(): Promise<{ clients: Client[]; live: boolean }> {
   try {
     const supabase = await createClient();
     const viewer = await getViewer();
-    if (!viewer) return { clients: mockClients, live: false };
+    if (!viewer) return { clients: [], live: false };
     const { data, error } = await supabase
       .from("clients")
       .select("id, plan, status, goals, progress, subscription, profile_id, created_at")
       .eq("coach_id", viewer.id)
       .order("created_at", { ascending: false });
     if (error || !data || data.length === 0) {
-      return { clients: mockClients, live: false };
+      return { clients: [], live: false };
     }
     const { data: profiles } = await supabase
       .from("profiles")
@@ -43,22 +43,21 @@ async function loadClients(): Promise<{ clients: Client[]; live: boolean }> {
       })),
     };
   } catch {
-    return { clients: mockClients, live: false };
+    return { clients: [], live: false };
   }
 }
 
 export default async function CoachClientsPage() {
-  const [{ clients, live }, links] = await Promise.all([loadClients(), getCoachLinks()]);
+  const [{ clients, live }, links, t] = await Promise.all([loadClients(), getCoachLinks(), getDict()]);
   const active = clients.filter((c) => c.isActive).length;
 
   return (
     <div>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">Clients</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight">{t.coach.clientsTitle}</h1>
           <p className="mt-1 text-sm text-slate-400">
-            {clients.length} total • {active} active
-            {!live && " • preview data (connect Supabase for live roster)"}
+            {clients.length} {t.coach.clientsCount} • {active} {t.common.active.toLowerCase()}
           </p>
         </div>
       </div>
@@ -75,19 +74,19 @@ export default async function CoachClientsPage() {
                   linkExpired(l) ? "bg-red-500/15 text-red-400" : "bg-green-500/15 text-green-400"
                 }`}
               >
-                {l.status}
-                {l.ends_at ? ` → ${new Date(l.ends_at).toLocaleDateString()}` : l.starts_at ? "" : " • starts on send"}
+                {l.status === "active" ? t.common.active : l.status === "pending" ? t.common.pending : l.status === "expired" ? t.common.expired : l.status}
+                {l.ends_at ? ` → ${new Date(l.ends_at).toLocaleDateString()}` : l.starts_at ? "" : ` • ${t.subs.startsOnSend}`}
               </span>
-              <span className="text-slate-500">{l.weeks}w</span>
+              <span className="text-slate-500">{l.weeks} {t.subs.weeks}</span>
             </li>
           ))}
         </ul>
       )}
       <div className="mt-6">
-        <InviteTraineeForm />
+        <InviteTraineeForm t={t} />
       </div>
       <div className="mt-6">
-        <ClientsTable clients={clients} live={live} logsBase="/coach/clients" />
+        <ClientsTable clients={clients} live={live} logsBase="/coach/clients" t={t} />
       </div>
     </div>
   );

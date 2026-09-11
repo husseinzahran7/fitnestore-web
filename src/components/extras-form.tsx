@@ -2,12 +2,13 @@
 
 import { useActionState } from "react";
 import { logExtra, type FoodItem } from "@/lib/foods";
+import type { Dict } from "@/lib/locale";
 
 const input =
   "w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm outline-none placeholder:text-slate-500 focus:border-brand-500";
 const label = "mb-1.5 block text-sm font-medium";
 
-export default function ExtrasForm({ foods }: { foods: FoodItem[] }) {
+export default function ExtrasForm({ foods, t }: { foods: FoodItem[]; t: Dict }) {
   const [state, action, pending] = useActionState(logExtra, {});
 
   if (foods.length === 0) return null;
@@ -17,26 +18,26 @@ export default function ExtrasForm({ foods }: { foods: FoodItem[] }) {
       action={action}
       className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
     >
-      <h2 className="text-sm font-bold">Log extra food or drink</h2>
+      <h2 className="text-sm font-bold">{t.meals.logExtra}</h2>
       <p className="mt-0.5 text-xs text-slate-500">
-        Ate outside the plan? Juice, snack, extra serving — log it here.
+        {t.meals.extraDesc}
       </p>
       <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">
         <div className="flex-1">
           <label htmlFor="extra-food" className={label}>
-            Food / drink
+            {t.meals.foodDrink}
           </label>
           <select id="extra-food" name="foodId" required className={input}>
             {foods.map((f) => (
               <option key={f.id} value={f.id} className="bg-ink-900">
-                {f.name} ({f.kind})
+                {f.name} ({f.kind === "supplement" ? t.coach.kindSupplement : f.kind === "drink" ? t.coach.kindDrink : t.coach.kindFood})
               </option>
             ))}
           </select>
         </div>
         <div className="w-28">
           <label htmlFor="extra-grams" className={label}>
-            Grams / ml
+            {t.meals.gramsMl}
           </label>
           <input
             id="extra-grams"
@@ -54,7 +55,7 @@ export default function ExtrasForm({ foods }: { foods: FoodItem[] }) {
           disabled={pending}
           className="rounded-full bg-brand-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-brand-400 disabled:opacity-60"
         >
-          {pending ? "Saving…" : "Log"}
+          {pending ? t.common.saving : t.coach.logBtn}
         </button>
       </div>
       {state?.error && (
@@ -64,7 +65,7 @@ export default function ExtrasForm({ foods }: { foods: FoodItem[] }) {
       )}
       {state?.ok && (
         <p role="status" className="mt-2 text-xs text-green-400">
-          Logged.
+          {t.meals.logged}
         </p>
       )}
     </form>

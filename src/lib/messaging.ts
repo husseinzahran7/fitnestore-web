@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient, requireActive } from "@/lib/supabase/server";
+import { getDict } from "@/lib/i18n";
 import type { Conversation } from "@/data/mockConversations";
 
 // Live conversations mapped onto the shared Conversation shape.
@@ -147,18 +148,19 @@ export async function sendMessage(
   content: string
 ): Promise<SendState> {
   const text = content.trim();
-  if (!conversationId || !text) return { error: "Empty message." };
+  if (!conversationId || !text) return { error: (await getDict()).errors.emptyMessage };
+  const t = await getDict();
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet — message not sent." };
+    return { error: t.errors.noSupabase };
   }
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You're signed out. Sign in again." };
-  if (!(await requireActive())) return { error: "Account suspended." };
+  if (!user) return { error: t.errors.signedOut };
+  if (!(await requireActive())) return { error: t.errors.suspended };
 
   // RLS enforces sender_id = auth.uid() + membership; no extra checks here.
   const { error } = await supabase.from("messages").insert({
@@ -166,7 +168,7 @@ export async function sendMessage(
     sender_id: user.id,
     content: text,
   });
-  if (error) return { error: "Couldn't send. Try again." };
+  if (error) return { error: t.errors.cantSend };
   revalidatePath("/dashboard/messages");
   revalidatePath("/coach/messages");
   return { ok: true };

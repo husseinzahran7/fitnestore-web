@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { ArrowRight, Smartphone } from "lucide-react";
+import type { Dict } from "@/lib/locale";
 
 const Hero3D = dynamic(() => import("./hero-3d"), {
   ssr: false,
@@ -25,13 +26,12 @@ const item = {
   },
 };
 
-const stats = [
-  { value: "1 app", label: "for every coach" },
-  { value: "360°", label: "client tracking" },
-  { value: "0", label: "spreadsheets needed" },
-];
-
-export default function Hero() {
+export default function Hero({ t }: { t: Dict }) {
+  const stats = [
+    { value: "1 app", label: t.landing.statCoach },
+    { value: "360°", label: t.landing.statTracking },
+    { value: "0", label: t.landing.statSheets },
+  ];
   return (
     <section id="top" className="relative overflow-hidden pt-16">
       <div
@@ -43,28 +43,26 @@ export default function Hero() {
           <motion.div variants={item}>
             <span className="inline-flex items-center gap-2 rounded-full border border-brand-500/40 bg-brand-500/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-brand-400">
               <Smartphone size={14} />
-              Installable PWA
+              {t.landing.pwaBadge}
             </span>
           </motion.div>
           <motion.h1
             variants={item}
             className="mt-6 text-4xl font-extrabold leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl"
           >
-            Every coach.
+            {t.landing.h1a}
             <br />
-            Every client.
+            {t.landing.h1b}
             <br />
             <span className="bg-gradient-to-r from-brand-400 to-brand-600 bg-clip-text text-transparent">
-              One gym app.
+              {t.landing.h1c}
             </span>
           </motion.h1>
           <motion.p
             variants={item}
             className="mt-6 max-w-lg text-lg leading-relaxed text-slate-400"
           >
-            GYMers gives coaches a home for client programs, nutrition plans,
-            messaging, and progress — and gives clients their plan in their
-            pocket. No spreadsheets, no chaos.
+            {t.landing.heroP}
           </motion.p>
           <motion.div variants={item} className="mt-8 flex flex-col gap-3 sm:flex-row">
             <motion.a
@@ -73,7 +71,7 @@ export default function Hero() {
               whileTap={{ scale: 0.97 }}
               className="inline-flex items-center justify-center gap-2 rounded-full bg-brand-500 px-7 py-3.5 text-base font-semibold text-white shadow-xl shadow-brand-500/30 transition-colors hover:bg-brand-400"
             >
-              Start coaching free
+              {t.landing.startFree}
               <ArrowRight size={18} className="rtl:-scale-x-100" />
             </motion.a>
             <motion.a
@@ -82,7 +80,7 @@ export default function Hero() {
               whileTap={{ scale: 0.97 }}
               className="inline-flex items-center justify-center rounded-full border border-white/20 px-7 py-3.5 text-base font-semibold text-white transition-colors hover:bg-white/10"
             >
-              See how it works
+              {t.landing.seeHow}
             </motion.a>
           </motion.div>
           <motion.dl

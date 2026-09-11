@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient, requireActive } from "@/lib/supabase/server";
+import { getDict } from "@/lib/i18n";
 
 export type ApptState = { error?: string; ok?: boolean };
 
@@ -152,21 +153,22 @@ export async function createAppointment(
     String(formData.get("sessionType") ?? "Personal Training").trim().slice(0, 80) ||
     "Personal Training";
   const notes = String(formData.get("notes") ?? "").trim().slice(0, 500);
+  const t = await getDict();
   if (!clientId || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !startTime || !endTime) {
-    return { error: "Client, date, and start/end times are required." };
+    return { error: t.errors.apptFields };
   }
 
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet." };
+    return { error: t.errors.noSupabase };
   }
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You're signed out. Sign in again." };
-  if (!(await requireActive())) return { error: "Account suspended." };
+  if (!user) return { error: t.errors.signedOut };
+  if (!(await requireActive())) return { error: t.errors.suspended };
 
   // RLS coach-manage is the real gate (own rows or admin).
   // Subscription gate first for a clear message.
@@ -182,7 +184,7 @@ export async function createAppointment(
     session_type: sessionType,
     notes,
   });
-  if (error) return { error: "Couldn't save. Try again." };
+  if (error) return { error: t.errors.cantSave };
   const { startClockForClientId } = await import("@/lib/subscriptions");
   await startClockForClientId(clientId);
   revalidatePath("/coach/schedule");
@@ -193,25 +195,26 @@ export async function updateAppointmentStatus(
   id: string,
   status: string
 ): Promise<{ error?: string }> {
+  const t = await getDict();
   if (!id || !["upcoming", "completed", "cancelled"].includes(status)) {
-    return { error: "Invalid request." };
+    return { error: t.errors.invalid };
   }
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet." };
+    return { error: t.errors.noSupabase };
   }
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You're signed out. Sign in again." };
-  if (!(await requireActive())) return { error: "Account suspended." };
+  if (!user) return { error: t.errors.signedOut };
+  if (!(await requireActive())) return { error: t.errors.suspended };
   const { error } = await supabase
     .from("appointments")
     .update({ status })
     .eq("id", id);
-  if (error) return { error: "Couldn't save. Try again." };
+  if (error) return { error: t.errors.cantSave };
   revalidatePath("/coach/schedule");
   return {};
 }

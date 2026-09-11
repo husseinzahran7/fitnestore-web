@@ -3,26 +3,29 @@
 import { useActionState } from "react";
 import { submitCheckin } from "@/lib/progress-actions";
 import type { UserCheckin } from "@/lib/progress-queries";
+import type { Dict } from "@/lib/locale";
 
 const input =
   "w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm outline-none placeholder:text-slate-500 focus:border-brand-500";
 
 export default function CheckinSection({
   checkins,
+  t,
 }: {
   checkins: UserCheckin[];
+  t: Dict;
 }) {
   const [state, action, pending] = useActionState(submitCheckin, {});
 
   return (
     <div className="mt-8">
-      <h2 className="text-lg font-bold">Weekly check-in</h2>
+      <h2 className="text-lg font-bold">{t.progress.checkinTitle}</h2>
       <form
         action={action}
         className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4"
       >
         <label htmlFor="checkin-notes" className="mb-1.5 block text-sm font-medium">
-          How did this week go? Training, food, sleep, energy…
+          {t.progress.checkinLabel}
         </label>
         <textarea
           id="checkin-notes"
@@ -30,7 +33,7 @@ export default function CheckinSection({
           rows={3}
           maxLength={1000}
           required
-          placeholder="Hit all 4 sessions, protein on point, sleep short on Thursday…"
+          placeholder={t.progress.checkinPh}
           className={input}
         />
         <button
@@ -38,7 +41,7 @@ export default function CheckinSection({
           disabled={pending}
           className="mt-3 rounded-full bg-brand-500 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-brand-400 disabled:opacity-60"
         >
-          {pending ? "Sending…" : "Send check-in"}
+          {pending ? t.progress.sending : t.progress.sendCheckin}
         </button>
         {state?.error && (
           <p role="alert" className="mt-2 text-xs text-red-400">
@@ -47,7 +50,7 @@ export default function CheckinSection({
         )}
         {state?.ok && (
           <p role="status" className="mt-2 text-xs text-green-400">
-            Sent to your coach.
+            {t.progress.sentCoach}
           </p>
         )}
       </form>

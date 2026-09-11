@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient, requireActive } from "@/lib/supabase/server";
+import { getDict } from "@/lib/i18n";
 
 export type MealState = { error?: string; ok?: boolean };
 
@@ -11,19 +12,20 @@ export async function assignTemplate(
 ): Promise<MealState> {
   const templateId = String(formData.get("templateId") ?? "");
   const clientId = String(formData.get("clientId") ?? "");
-  if (!templateId || !clientId) return { error: "Invalid request." };
+  const t = await getDict();
+  if (!templateId || !clientId) return { error: t.errors.invalid };
 
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet." };
+    return { error: t.errors.noSupabase };
   }
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You're signed out. Sign in again." };
-  if (!(await requireActive())) return { error: "Account suspended." };
+  if (!user) return { error: t.errors.signedOut };
+  if (!(await requireActive())) return { error: t.errors.suspended };
 
   // Template must be a live template row (RLS read covers visibility).
   const { data: template } = await supabase
@@ -32,7 +34,7 @@ export async function assignTemplate(
     .eq("id", templateId)
     .eq("is_template", true)
     .single();
-  if (!template) return { error: "Template not found." };
+  if (!template) return { error: t.errors.templateMissing };
 
   // Client must belong to this coach (or caller is admin).
   const { data: client } = await supabase
@@ -40,7 +42,7 @@ export async function assignTemplate(
     .select("id, coach_id")
     .eq("id", clientId)
     .single();
-  if (!client) return { error: "Client not found." };
+  if (!client) return { error: t.errors.clientMissing };
 
   const { coachMaySend } = await import("@/lib/subscriptions");
   const gate = await coachMaySend(clientId);
@@ -57,7 +59,7 @@ export async function assignTemplate(
     })
     .select("id")
     .single();
-  if (planError || !plan) return { error: "Couldn't assign. Try again." };
+  if (planError || !plan) return { error: t.errors.assignFailed };
 
   const { data: meals } = await supabase
     .from("meals")
@@ -73,7 +75,7 @@ export async function assignTemplate(
         details: m.details,
       }))
     );
-    if (mealsError) return { error: "Plan created, meals failed. Try again." };
+    if (mealsError) return { error: t.errors.assignMealsFail };
   }
 
   revalidatePath("/coach/nutrition");
@@ -91,21 +93,22 @@ export async function logMeal(
   const name = String(formData.get("name") ?? "").trim().slice(0, 80);
   const day = String(formData.get("day") ?? "").trim().slice(0, 20);
   const details = String(formData.get("details") ?? "").trim().slice(0, 500);
+  const t = await getDict();
   if (!planId || !clientId || !name) {
-    return { error: "Plan, client, and meal name are required." };
+    return { error: t.errors.mealFields };
   }
 
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet — meal not saved." };
+    return { error: t.errors.noSupabase };
   }
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You're signed out. Sign in again." };
-  if (!(await requireActive())) return { error: "Account suspended." };
+  if (!user) return { error: t.errors.signedOut };
+  if (!(await requireActive())) return { error: t.errors.suspended };
 
   // RLS meals-coach-write enforces (own plan or own client); admin bypasses.
   // Subscription gate first for a clear message.
@@ -119,7 +122,7 @@ export async function logMeal(
     day: day || null,
     details: details || null,
   });
-  if (error) return { error: "Couldn't save. Try again." };
+  if (error) return { error: t.errors.cantSave };
 
   revalidatePath("/coach/nutrition");
   return { ok: true };

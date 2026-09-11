@@ -3,17 +3,20 @@
 import { useState } from "react";
 import { ArrowLeft, Send } from "lucide-react";
 import type { Conversation } from "@/data/mockConversations";
+import type { Dict } from "@/lib/locale";
 
 export default function MessageThread({
   conversations,
   emptyHint,
   me = "user",
   onSend,
+  t,
 }: {
   conversations: Conversation[];
   emptyHint: string;
   me?: "user" | "coach";
   onSend?: (conversationId: string, content: string) => Promise<{ error?: string }>;
+  t: Dict;
 }) {
   const [list, setList] = useState(conversations);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -116,7 +119,7 @@ export default function MessageThread({
             <div className="flex items-center gap-2 border-b border-white/10 p-3">
               <button
                 onClick={() => setActiveId(null)}
-                aria-label="Back to conversations"
+                aria-label={t.msgs.back}
                 className="rounded-lg p-2 hover:bg-white/10 md:hidden"
               >
                 <ArrowLeft size={16} />
@@ -146,14 +149,14 @@ export default function MessageThread({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") send();
                 }}
-                placeholder="Type a message…"
-                aria-label="Type a message"
+                placeholder={t.common.typeMessage}
+                aria-label={t.common.typeMessage}
                 className="flex-1 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm outline-none placeholder:text-slate-500 focus:border-brand-500"
               />
               <button
                 onClick={send}
                 disabled={!draft.trim() || sending}
-                aria-label="Send message"
+                aria-label={t.common.sendMessage}
                 className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500 text-white transition-all hover:bg-brand-400 disabled:opacity-40"
               >
                 <Send size={16} />
@@ -167,7 +170,7 @@ export default function MessageThread({
           </>
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
-            <p className="font-semibold">No conversation selected</p>
+            <p className="font-semibold">{t.msgs.noSelection}</p>
             <p className="mt-1 text-sm text-slate-400">{emptyHint}</p>
           </div>
         )}

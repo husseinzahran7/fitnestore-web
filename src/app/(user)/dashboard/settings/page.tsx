@@ -12,7 +12,7 @@ export default async function UserSettingsPage() {
       <h1 className="text-3xl font-extrabold tracking-tight">{t.nav.settings}</h1>
       <p className="mt-1 text-sm text-slate-400">{t.pages.yourProfile}</p>
       <div className="mt-6">
-        <SettingsForm viewer={viewer} />
+        <SettingsForm viewer={viewer} t={t} />
       </div>
     </div>
   );

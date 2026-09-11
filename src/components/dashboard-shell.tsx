@@ -76,19 +76,21 @@ const buildNav = (t: Dict["nav"]): Record<Role, NavItem[]> => ({
   ],
 });
 
-const PILL: Record<Role, string | null> = {
+const buildPill = (t: Dict["shell"]): Record<Role, string | null> => ({
   user: null,
-  coach: "Coach",
-  admin: "Admin",
-  superadmin: "Owner",
-};
+  coach: t.pillCoach,
+  admin: t.pillAdmin,
+  superadmin: t.pillOwner,
+});
 
-const SUBTITLE: Record<Role, (v: Viewer) => string> = {
-  user: (v) => v.membership ?? "Member",
-  coach: () => "Coach Portal",
-  admin: () => "Admin Portal",
-  superadmin: () => "Owner Portal",
-};
+const buildSubtitle = (
+  t: Dict["shell"]
+): Record<Role, (v: Viewer) => string> => ({
+  user: (v) => v.membership ?? t.subMember,
+  coach: () => t.subCoachPortal,
+  admin: () => t.subAdminPortal,
+  superadmin: () => t.subOwnerPortal,
+});
 
 export default function DashboardShell({
   role,
@@ -110,6 +112,8 @@ export default function DashboardShell({
   const nav = buildNav(t.nav)[role];
   const utility = role !== "user";
   const ProfileIcon = role === "admin" || role === "superadmin" ? Shield : User;
+  const PILL = buildPill(t.shell);
+  const SUBTITLE = buildSubtitle(t.shell);
 
   const renderItem = (it: NavItem, mini?: boolean) => {
     const active = pathname === it.path;
@@ -183,10 +187,10 @@ export default function DashboardShell({
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/15">
             <ProfileIcon size={20} className="text-brand-400" />
           </div>
-          <form action="/auth/signout" method="post">
-            <button
-              type="submit"
-              aria-label="Logout"
+            <form action="/auth/signout" method="post">
+              <button
+                type="submit"
+                aria-label={t.auth.signOut}
               className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/15 transition-colors hover:bg-white/10"
             >
               <LogOut size={16} />
@@ -238,7 +242,7 @@ export default function DashboardShell({
             </Link>
             <button
               onClick={() => setCollapsed(!collapsed)}
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              aria-label={collapsed ? t.shell.expandSide : t.shell.collapseSide}
               className="shrink-0 rounded-lg p-2 transition-colors hover:bg-white/10 rtl:rotate-180"
             >
               {collapsed ? <ChevronsRight size={18} /> : <ChevronsLeft size={18} />}
@@ -263,7 +267,7 @@ export default function DashboardShell({
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Navigation menu"
+        aria-label={t.shell.navMenu}
         className={cx(
           "fixed inset-y-0 start-0 z-50 flex w-full max-w-xs flex-col border-e border-white/10 bg-ink-900 transition-transform duration-300 md:hidden",
           mobileOpen ? "translate-x-0" : "-translate-x-full rtl:translate-x-full"
@@ -280,7 +284,7 @@ export default function DashboardShell({
           </span>
           <button
             onClick={() => setMobileOpen(false)}
-            aria-label="Close navigation menu"
+            aria-label={t.shell.closeNav}
             className="rounded-lg p-2 hover:bg-white/10"
           >
             <X size={20} />
@@ -303,7 +307,7 @@ export default function DashboardShell({
           <div className="flex min-w-0 items-center">
             <button
               onClick={() => setMobileOpen(true)}
-              aria-label="Open navigation menu"
+              aria-label={t.shell.openNav}
               className="me-2 shrink-0 rounded-lg p-2 hover:bg-white/10"
             >
               <Menu size={20} />
@@ -316,9 +320,9 @@ export default function DashboardShell({
           {utility && (
             <div className="flex shrink-0 items-center gap-1">
               <LocaleToggle current={locale} />
-              <BellButton />
+              <BellButton t={t} />
               <button
-                aria-label="Search"
+                aria-label={t.shell.searchAria}
                 onClick={() => setSearchOpen(!searchOpen)}
                 className="rounded-lg p-2 hover:bg-white/10"
               >
@@ -331,8 +335,8 @@ export default function DashboardShell({
         {utility && searchOpen && (
           <div className="border-b border-white/10 bg-ink-950 p-2 md:hidden">
             <input
-              placeholder="Search…"
-              aria-label="Search"
+              placeholder={t.auth.search}
+              aria-label={t.shell.searchAria}
               className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm outline-none placeholder:text-slate-500 focus:border-brand-500"
             />
           </div>
@@ -341,10 +345,10 @@ export default function DashboardShell({
         {utility && (
           <header className="hidden items-center justify-end gap-2 border-b border-white/10 bg-ink-950 px-6 py-3 md:flex">
             <LocaleToggle current={locale} />
-            <BellButton />
+            <BellButton t={t} />
             <input
-              placeholder="Search…"
-              aria-label="Search"
+              placeholder={t.auth.search}
+              aria-label={t.shell.searchAria}
               className="w-64 rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-brand-500"
             />
           </header>

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient, requireActive } from "@/lib/supabase/server";
+import { getDict } from "@/lib/i18n";
 import { getCoachClients } from "@/lib/nutrition-queries";
 
 export type FoodState = { error?: string; ok?: boolean };
@@ -55,24 +56,25 @@ export async function addFood(
   _prev: FoodState,
   formData: FormData
 ): Promise<FoodState> {
+  const t = await getDict();
   const name = String(formData.get("name") ?? "").trim().slice(0, 80);
   const kind = String(formData.get("kind") ?? "food");
-  if (!name) return { error: "Name can't be empty." };
+  if (!name) return { error: t.errors.nameEmpty };
   if (kind !== "food" && kind !== "supplement" && kind !== "drink") {
-    return { error: "Invalid kind." };
+    return { error: t.errors.badKind };
   }
 
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet." };
+    return { error: t.errors.noSupabase };
   }
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You're signed out. Sign in again." };
-  if (!(await requireActive())) return { error: "Account suspended." };
+  if (!user) return { error: t.errors.signedOut };
+  if (!(await requireActive())) return { error: t.errors.suspended };
 
   const { error } = await supabase.from("food_items").insert({
     coach_id: user.id,
@@ -84,7 +86,7 @@ export async function addFood(
     fat_100: num(formData.get("fat")),
     fiber_100: num(formData.get("fiber")),
   });
-  if (error) return { error: "Couldn't save. Try again." };
+  if (error) return { error: t.errors.cantSave };
   revalidatePath("/coach/nutrition");
   return { ok: true };
 }
@@ -93,22 +95,23 @@ export async function addIngredient(
   _prev: FoodState,
   formData: FormData
 ): Promise<FoodState> {
+  const t = await getDict();
   const mealId = String(formData.get("mealId") ?? "");
   const foodId = String(formData.get("foodId") ?? "");
   const grams = num(formData.get("grams")) || 100;
-  if (!mealId || !foodId) return { error: "Invalid request." };
+  if (!mealId || !foodId) return { error: t.errors.invalid };
 
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet." };
+    return { error: t.errors.noSupabase };
   }
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You're signed out. Sign in again." };
-  if (!(await requireActive())) return { error: "Account suspended." };
+  if (!user) return { error: t.errors.signedOut };
+  if (!(await requireActive())) return { error: t.errors.suspended };
 
   // RLS ingredients-coach-write is the real gate (own plan or own client).
   const { error } = await supabase.from("meal_ingredients").insert({
@@ -116,7 +119,7 @@ export async function addIngredient(
     food_item_id: foodId,
     grams,
   });
-  if (error) return { error: "Couldn't add. Try again." };
+  if (error) return { error: t.errors.cantAdd };
   revalidatePath("/coach/nutrition");
   return { ok: true };
 }
@@ -392,30 +395,31 @@ export async function checkMeal(
   _prev: FoodState,
   formData: FormData
 ): Promise<FoodState> {
+  const t = await getDict();
   const mealId = String(formData.get("mealId") ?? "");
   const comment = String(formData.get("comment") ?? "").trim().slice(0, 300);
-  if (!mealId) return { error: "Invalid request." };
+  if (!mealId) return { error: t.errors.invalid };
 
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet." };
+    return { error: t.errors.noSupabase };
   }
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You're signed out. Sign in again." };
-  if (!(await requireActive())) return { error: "Account suspended." };
+  if (!user) return { error: t.errors.signedOut };
+  if (!(await requireActive())) return { error: t.errors.suspended };
   const { ensureMyClientId } = await import("@/lib/ensure-client");
   const checkClientId = await ensureMyClientId(supabase, user.id);
-  if (!checkClientId) return { error: "No client record found." };
+  if (!checkClientId) return { error: t.errors.noClientRecord };
 
   const { error } = await supabase.from("meal_checks").upsert(
     { meal_id: mealId, client_id: checkClientId, comment },
     { onConflict: "meal_id,checked_on" }
   );
-  if (error) return { error: "Couldn't save. Try again." };
+  if (error) return { error: t.errors.cantSave };
   revalidatePath("/dashboard/nutrition");
   return { ok: true };
 }
@@ -425,28 +429,29 @@ export async function logExtra(
   formData: FormData
 ): Promise<FoodState> {
   const foodId = String(formData.get("foodId") ?? "");
+  const t = await getDict();
   const grams = Math.max(1, Math.min(5000, parseFloat(String(formData.get("grams") ?? "100")) || 0));
-  if (!foodId || !grams) return { error: "Pick a food and grams." };
+  if (!foodId || !grams) return { error: t.errors.pickFood };
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet." };
+    return { error: t.errors.noSupabase };
   }
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You're signed out. Sign in again." };
-  if (!(await requireActive())) return { error: "Account suspended." };
+  if (!user) return { error: t.errors.signedOut };
+  if (!(await requireActive())) return { error: t.errors.suspended };
   const { ensureMyClientId } = await import("@/lib/ensure-client");
   const extraClientId = await ensureMyClientId(supabase, user.id);
-  if (!extraClientId) return { error: "No client record found." };
+  if (!extraClientId) return { error: t.errors.noClientRecord };
   const { error } = await supabase.from("food_logs").insert({
     client_id: extraClientId,
     food_item_id: foodId,
     grams,
   });
-  if (error) return { error: "Couldn't save. Try again." };
+  if (error) return { error: t.errors.cantSave };
   revalidatePath("/dashboard/nutrition");
   return { ok: true };
 }
@@ -455,26 +460,27 @@ export async function logWater(
   _prev: FoodState,
   formData: FormData
 ): Promise<FoodState> {
+  const t = await getDict();
   const ml = Math.max(0, Math.min(2000, parseInt(String(formData.get("ml") ?? "250"), 10) || 0));
-  if (!ml) return { error: "Invalid amount." };
+  if (!ml) return { error: t.errors.badAmount };
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet." };
+    return { error: t.errors.noSupabase };
   }
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You're signed out. Sign in again." };
-  if (!(await requireActive())) return { error: "Account suspended." };
+  if (!user) return { error: t.errors.signedOut };
+  if (!(await requireActive())) return { error: t.errors.suspended };
   const { ensureMyClientId } = await import("@/lib/ensure-client");
   const waterClientId = await ensureMyClientId(supabase, user.id);
-  if (!waterClientId) return { error: "No client record found." };
+  if (!waterClientId) return { error: t.errors.noClientRecord };
   const { error } = await supabase
     .from("water_logs")
     .insert({ client_id: waterClientId, ml });
-  if (error) return { error: "Couldn't save. Try again." };
+  if (error) return { error: t.errors.cantSave };
   revalidatePath("/dashboard/nutrition");
   return { ok: true };
 }

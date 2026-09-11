@@ -11,7 +11,7 @@ export async function generateMetadata({
 }) {
   const { id } = await params;
   const coach = await getCoach(id);
-  return { title: coach ? coach.name : "Coach" };
+  return { title: coach ? coach.name : "GYMers" };
 }
 
 export default async function CoachProfilePage({
@@ -21,7 +21,7 @@ export default async function CoachProfilePage({
 }) {
   const { id } = await params;
   const [coach, locale, t] = await Promise.all([getCoach(id), getLocale(), getDict()]);
-  const backLabel = locale === "ar" ? "كل المدربين" : "All coaches";
+  const backLabel = t.coaches.backAll;
 
   if (!coach) {
     return (
@@ -29,7 +29,7 @@ export default async function CoachProfilePage({
         <SiteHeader locale={locale} />
         <main className="mx-auto max-w-3xl px-4 pb-20 pt-28">
           <p className="text-sm text-slate-400">
-            {locale === "ar" ? "المدرب غير موجود." : "Coach not found."}{" "}
+            {t.coaches.notFoundCoach}{" "}
             <Link href="/coaches" className="font-semibold text-brand-400">
               {t.nav.coaches}
             </Link>
@@ -40,9 +40,7 @@ export default async function CoachProfilePage({
   }
 
   const waText = encodeURIComponent(
-    locale === "ar"
-      ? `مرحباً ${coach.name}، أريد التدرب معك عبر GYMers.`
-      : `Hi ${coach.name}, I want to train with you via GYMers.`
+    `${t.coaches.waHi} ${coach.name}${locale === "ar" ? "، " : ", "}${t.coaches.waWant}`
   );
 
   return (
@@ -71,7 +69,7 @@ export default async function CoachProfilePage({
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight">{coach.name}</h1>
             <p className="mt-1 text-sm text-slate-400">
-              {coach.years} {locale === "ar" ? "سنوات خبرة" : "years experience"}
+              {coach.years} {t.coaches.yrsLong}
             </p>
           </div>
           <span
@@ -81,13 +79,7 @@ export default async function CoachProfilePage({
                 : "bg-orange-500/15 text-orange-400"
             }`}
           >
-            {coach.freeConsult
-              ? locale === "ar"
-                ? "استشارة مجانية"
-                : "Free consult"
-              : locale === "ar"
-                ? "حصص مدفوعة فقط"
-                : "Paid sessions only"}
+            {coach.freeConsult ? t.coaches.freeBadge : t.coaches.paidBadge}
           </span>
         </div>
 
@@ -98,7 +90,7 @@ export default async function CoachProfilePage({
         {coach.specialties.length > 0 && (
           <div className="mt-6">
             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">
-              {locale === "ar" ? "التخصصات" : "Specialties"}
+              {t.coach.specialties}
             </h2>
             <div className="mt-2 flex flex-wrap gap-2">
               {coach.specialties.map((s) => (
@@ -114,14 +106,14 @@ export default async function CoachProfilePage({
         )}
         {coach.specialtiesOther && (
           <p className="mt-3 text-sm text-slate-300">
-            {locale === "ar" ? "أيضاً: " : "Also: "}{coach.specialtiesOther}
+            {t.coaches.alsoWord}{coach.specialtiesOther}
           </p>
         )}
 
         {coach.certifications.length > 0 && (
           <div className="mt-6">
             <h2 className="text-sm font-bold uppercase tracking-wider text-slate-400">
-              {locale === "ar" ? "الشهادات" : "Certifications"}
+              {t.coaches.certsTitle}
             </h2>
             <ul className="mt-2 space-y-1.5">
               {coach.certifications.map((c) => (
@@ -152,7 +144,7 @@ export default async function CoachProfilePage({
                 placeholder: t.coaches.goalPlaceholder,
                 free: t.coaches.requestFree,
                 paid: t.coaches.requestPaid,
-                sending: locale === "ar" ? "جارٍ الإرسال…" : "Sending…",
+                sending: t.progress.sending,
               }}
             />
           </div>

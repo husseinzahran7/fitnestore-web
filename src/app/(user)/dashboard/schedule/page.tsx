@@ -1,6 +1,5 @@
 import UserSchedule from "@/components/user-schedule";
 import SubLock from "@/components/sub-lock";
-import { weeklyWorkouts } from "@/data/mockWorkouts";
 import { getUserScheduleWeek } from "@/lib/schedule-queries";
 import { getUserAppointments } from "@/lib/schedule";
 import { getMyAppSub, getMyLinks } from "@/lib/subscriptions";
@@ -35,7 +34,6 @@ export default async function UserSchedulePage() {
           </span>
         )}
         {!live && !locked && ` ${t.subs.soloNote}`}
-        {!live && !locked && t.pages.previewSchedule}
       </p>
       {unstarted && (
         <p className="mt-2 text-xs text-slate-500">
@@ -44,9 +42,7 @@ export default async function UserSchedulePage() {
       )}
       {pendingInvite && (
         <p className="mt-2 rounded-xl border border-brand-500/30 bg-brand-500/[0.07] px-4 py-2.5 text-xs text-slate-300">
-          {locale === "ar"
-            ? `طلب ربط من ${pendingInvite.coach_name ?? "مدربك"} — يُفعَّل بعد إتمام الدفع.`
-            : `Link request from ${pendingInvite.coach_name ?? "your coach"} — activates after payment clears.`}
+          {t.home.linkReqFrom} {pendingInvite.coach_name ?? t.home.yourCoachWord} — {t.home.activatesAfter}
         </p>
       )}
       <div className="mt-6">
@@ -59,12 +55,12 @@ export default async function UserSchedulePage() {
             soloNote={t.subs.soloNote}
           />
         ) : (
-          <UserSchedule week={live ? week : weeklyWorkouts} live={live} />
+          <UserSchedule week={week} live={live} t={t} />
         )}
       </div>
       {!locked && appointments.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-xl font-bold">Upcoming with your coach</h2>
+          <h2 className="text-xl font-bold">{t.home.upWithCoach}</h2>
           <ul className="mt-3 space-y-3">
             {appointments.map((a) => (
               <li
@@ -83,7 +79,7 @@ export default async function UserSchedulePage() {
                   href={`/api/appointments/${a.id}/ics`}
                   className="w-fit rounded-full bg-white/10 px-4 py-1.5 text-xs font-bold text-slate-200 hover:bg-white/20"
                 >
-                  Add to calendar
+                  {t.common.addToCalendar}
                 </a>
               </li>
             ))}

@@ -7,17 +7,18 @@ import {
   setUserRole,
   type ManagedUser,
 } from "@/lib/coaches";
+import type { Dict } from "@/lib/locale";
 
 const ROLES = ["user", "coach", "admin"] as const;
 
-function RowActions({ user }: { user: ManagedUser }) {
+function RowActions({ user, t }: { user: ManagedUser; t: Dict }) {
   const [roleState, roleAction, rolePending] = useActionState(setUserRole, {});
   const [lockState, lockAction, lockPending] = useActionState(setUserDisabled, {});
 
   if (user.protected) {
     return (
       <span className="rounded-full bg-brand-500/15 px-3 py-1 text-xs font-bold text-brand-400">
-        Owner
+        {t.admin.ownerBadge}
       </span>
     );
   }
@@ -43,7 +44,7 @@ function RowActions({ user }: { user: ManagedUser }) {
           disabled={rolePending}
           className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold hover:bg-white/20 disabled:opacity-50"
         >
-          Set
+          {t.common.set}
         </button>
       </form>
       <form action={lockAction}>
@@ -62,7 +63,7 @@ function RowActions({ user }: { user: ManagedUser }) {
               : "bg-red-500/15 text-red-400 hover:bg-red-500/25"
           }`}
         >
-          {user.disabled ? "Enable" : "Disable"}
+          {user.disabled ? t.common.enable : t.common.disable}
         </button>
       </form>
       {(roleState?.error || lockState?.error) && (
@@ -74,11 +75,11 @@ function RowActions({ user }: { user: ManagedUser }) {
   );
 }
 
-export default function UsersTable({ users }: { users: ManagedUser[] }) {
+export default function UsersTable({ users, t }: { users: ManagedUser[]; t: Dict }) {
   if (users.length === 0) {
     return (
       <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-sm text-slate-400">
-        No accounts found.
+        {t.admin.noAccounts}
       </p>
     );
   }
@@ -94,11 +95,11 @@ export default function UsersTable({ users }: { users: ManagedUser[] }) {
             <div className="flex flex-wrap items-center gap-2">
               <span className="truncate font-semibold">{u.name}</span>
               <span className="rounded-full bg-white/10 px-2.5 py-0.5 text-xs font-semibold capitalize text-slate-300">
-                {u.role}
+                {u.role === "superadmin" ? t.admin.ownerBadge : u.role}
               </span>
               {u.disabled && (
                 <span className="rounded-full bg-red-500/15 px-2.5 py-0.5 text-xs font-bold text-red-400">
-                  Disabled
+                  {t.admin.disabledBadge}
                 </span>
               )}
             </div>
@@ -106,10 +107,10 @@ export default function UsersTable({ users }: { users: ManagedUser[] }) {
               <span className="truncate font-mono text-xs text-slate-500">
                 {u.id}
               </span>
-              <CopyIdButton id={u.id} label="Copy full user ID" />
+              <CopyIdButton id={u.id} label={t.admin.copyFullUser} copiedLabel={t.common.copied} />
             </div>
           </div>
-          <RowActions user={u} />
+          <RowActions user={u} t={t} />
         </li>
       ))}
     </ul>

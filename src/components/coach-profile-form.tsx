@@ -1,11 +1,12 @@
 "use client";
 
 import { useActionState } from "react";
-import { SPECIALTIES } from "@/lib/coach-data";
+import { SPECIALTIES, SPEC_LABEL } from "@/lib/coach-data";
 import {
   saveCoachProfile,
   type MyCoachProfile,
 } from "@/lib/coaches";
+import type { Dict } from "@/lib/locale";
 
 const input =
   "w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm outline-none placeholder:text-slate-500 focus:border-brand-500";
@@ -13,8 +14,10 @@ const label = "mb-1.5 block text-sm font-medium";
 
 export default function CoachProfileForm({
   initial,
+  t,
 }: {
   initial: MyCoachProfile;
+  t: Dict;
 }) {
   const [state, action, pending] = useActionState(saveCoachProfile, {});
 
@@ -25,7 +28,7 @@ export default function CoachProfileForm({
     >
       <div>
         <label htmlFor="displayName" className={label}>
-          Display name
+          {t.coach.displayName}
         </label>
         <input
           id="displayName"
@@ -40,7 +43,7 @@ export default function CoachProfileForm({
 
       <div>
         <label htmlFor="bio" className={label}>
-          Bio
+          {t.coach.bio}
         </label>
         <textarea
           id="bio"
@@ -48,13 +51,13 @@ export default function CoachProfileForm({
           defaultValue={initial.bio}
           rows={4}
           maxLength={1000}
-          placeholder="Who you coach and how you work…"
+          placeholder={t.coach.bioPh}
           className={input}
         />
       </div>
 
       <div>
-        <span className={label}>Specialties</span>
+        <span className={label}>{t.coach.specialties}</span>
         <div className="flex flex-wrap gap-2">
           {SPECIALTIES.map((s) => (
             <label
@@ -68,7 +71,7 @@ export default function CoachProfileForm({
                 defaultChecked={initial.specialties.includes(s)}
                 className="accent-brand-500"
               />
-              {s}
+              {t.coach[SPEC_LABEL[s]]}
             </label>
           ))}
         </div>
@@ -76,14 +79,14 @@ export default function CoachProfileForm({
 
       <div>
         <label htmlFor="specialtiesOther" className={label}>
-          Other specialties (free text)
+          {t.coach.specialtiesOther}
         </label>
         <input
           id="specialtiesOther"
           name="specialtiesOther"
           defaultValue={initial.specialtiesOther}
           maxLength={200}
-          placeholder="e.g. Postnatal, kettlebell sport…"
+          placeholder={t.coach.specialtiesOtherPh}
           className={input}
         />
       </div>
@@ -91,7 +94,7 @@ export default function CoachProfileForm({
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
           <label htmlFor="years" className={label}>
-            Years experience
+            {t.coach.yearsExp}
           </label>
           <input
             id="years"
@@ -105,14 +108,14 @@ export default function CoachProfileForm({
         </div>
         <div>
           <label htmlFor="whatsapp" className={label}>
-            WhatsApp number
+            {t.coach.whatsappNum}
           </label>
           <input
             id="whatsapp"
             name="whatsapp"
             type="tel"
             defaultValue={initial.whatsapp}
-            placeholder="15550001111 (country code + number)"
+            placeholder={t.coach.whatsappPh}
             className={input}
           />
         </div>
@@ -120,7 +123,7 @@ export default function CoachProfileForm({
 
       <div>
         <label htmlFor="certifications" className={label}>
-          Certifications (one per line)
+          {t.coach.certs}
         </label>
         <textarea
           id="certifications"
@@ -139,7 +142,7 @@ export default function CoachProfileForm({
           defaultChecked={initial.freeConsult}
           className="h-4 w-4 accent-brand-500"
         />
-        Offer free consults (off = paid sessions only)
+        {t.coach.freeConsults}
       </label>
 
       <button
@@ -147,7 +150,7 @@ export default function CoachProfileForm({
         disabled={pending}
         className="rounded-full bg-brand-500 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-brand-500/30 transition-all hover:bg-brand-400 disabled:opacity-60"
       >
-        {pending ? "Saving…" : "Save profile"}
+        {pending ? t.common.saving : t.coach.saveProfile}
       </button>
       {state?.error && (
         <p role="alert" className="text-sm text-red-400">
@@ -156,7 +159,7 @@ export default function CoachProfileForm({
       )}
       {state?.ok && (
         <p role="status" className="text-sm text-green-400">
-          Saved.
+          {t.common.saved}
         </p>
       )}
     </form>

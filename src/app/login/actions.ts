@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { getDict } from "@/lib/i18n";
 
 export type AuthState = { error?: string; notice?: string };
 
@@ -39,12 +40,13 @@ export async function login(
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
   const next = String(formData.get("next") ?? "");
+  const t = await getDict();
 
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
-  if (error || !data.user) return { error: "Invalid email or password." };
+  if (error || !data.user) return { error: t.errors.badLogin };
 
   // Disabled accounts stop here with a message instead of a bounce loop.
   const { data: blocked } = await supabase
@@ -54,7 +56,7 @@ export async function login(
     .single();
   if (blocked?.disabled) {
     await supabase.auth.signOut();
-    return { error: "Account suspended. Contact support." };
+    return { error: t.errors.suspendedContact };
   }
 
   revalidatePath("/", "layout");
@@ -71,14 +73,21 @@ export async function signup(
   const name = String(formData.get("name") ?? "").trim() || "Member";
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const t = await getDict();
 
   const { data, error } = await supabase.auth.signUp({ email, password });
-  if (error) return { error: error.message };
-  if (!data.user) return { error: "Could not create account. Try again." };
+  if (error) {
+    return {
+      error: error.message.includes("already registered")
+        ? t.errors.dupAccount
+        : error.message,
+    };
+  }
+  if (!data.user) return { error: t.errors.noAccount };
 
   if (!data.session) {
     return {
-      notice: "Account created — check your email to confirm, then sign in.",
+      notice: t.errors.confirmEmail,
     };
   }
 
@@ -94,22 +103,23 @@ export async function signInWithGoogle(): Promise<AuthState> {
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet." };
+    return { error: (await getDict()).errors.noSupabase };
   }
+  const t = await getDict();
   const headersList = await headers();
   const origin =
     headersList.get("origin") ??
     process.env.NEXT_PUBLIC_SITE_URL ??
     "";
   if (!origin) {
-    return { error: "App URL not configured — set NEXT_PUBLIC_SITE_URL." };
+    return { error: t.errors.noSiteUrl };
   }
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: { redirectTo: `${origin}/auth/callback` },
   });
   if (error || !data.url) {
-    return { error: "Google sign-in is not enabled yet." };
+    return { error: t.errors.googleOff };
   }
   redirect(data.url);
 }
