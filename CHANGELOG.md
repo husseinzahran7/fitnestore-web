@@ -1,4 +1,4 @@
-# CHANGELOG — GYMers (fitnestore-web)
+# CHANGELOG — GYMers
 
 Every entry verified in browser + `tsc` + `pnpm build` before commit.
 Live = backed by Supabase. Mock = hardcoded fallback when unconfigured.

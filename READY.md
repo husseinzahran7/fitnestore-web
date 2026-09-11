@@ -7,7 +7,6 @@ on every page, no horizontal scroll at 390px on all verified pages.
 ## Run it
 
 ```bash
-cd fitnestore-web
 cp .env.example .env.local   # fill NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 pnpm install
 pnpm dev                     # --webpack pinned; Turbopack crashes on PWA config
@@ -48,7 +47,7 @@ Stop it: `Ctrl+C`. Port busy? `Get-Process node | Stop-Process`.
 | Client meal plans board | LIVE (derived: created_at start, meal counts, checks adherence; drafts until first meal logged) |
 | Check-ins | LIVE (table 0018, both sides) |
 
-## Schema (hub `supabase/migrations/`, mirrors prod)
+## Schema (Supabase project `rucibulzpxzunqezlhby`, applied in order — see `docs/SCHEMA.md`)
 
 0001 (+order note), 0002 policies, 0003 self-insert, 0004 self-update,
 0005 metrics owner-insert, 0006 tracking+coach_profiles, 0007 reorder,
@@ -60,7 +59,6 @@ Stop it: `Ctrl+C`. Port busy? `Get-Process node | Stop-Process`.
 1. Deploy preview (Vercel import + 2 env vars + redirect URL).
 2. Google provider switch (ID/secret + redirect).
 3. Real-phone QA + subscription provider decision.
-4. `fitnestore-hub/` pre-existing uncommitted work — review separately.
 
 ## Docs
 
