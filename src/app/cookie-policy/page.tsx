@@ -1,18 +1,21 @@
 import SiteHeader from "@/components/site-header";
-import { getLocale } from "@/lib/i18n";
+import { getDict, getLocale } from "@/lib/i18n";
 
-export const metadata = { title: "Cookie Policy" };
+export async function generateMetadata() {
+  const t = await getDict();
+  return { title: t.legal.cookieTitle };
+}
 
 export default async function CookiePage() {
-  const locale = await getLocale();
+  const [locale, t] = await Promise.all([getLocale(), getDict()]);
   return (
     <div className="min-h-screen bg-ink-950 text-slate-100">
       <SiteHeader locale={locale} />
       <main className="mx-auto max-w-3xl px-4 pb-20 pt-28 sm:px-6">
-        <h1 className="text-3xl font-extrabold tracking-tight">Cookie Policy</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight">{t.legal.cookieTitle}</h1>
         <div className="mt-6 space-y-4 text-sm leading-relaxed text-slate-300">
-          <p>We use strictly-necessary cookies for sign-in sessions and preferences. No advertising trackers.</p>
-          <p>Disabling cookies will sign you out.</p>
+          <p>{t.legal.cookieP1}</p>
+          <p>{t.legal.cookieP2}</p>
         </div>
       </main>
     </div>

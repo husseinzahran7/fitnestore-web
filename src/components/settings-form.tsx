@@ -4,8 +4,9 @@ import { useActionState } from "react";
 import { updateProfile, type SettingsState } from "@/lib/settings-actions";
 import CopyIdButton from "@/components/copy-id";
 import type { Viewer } from "@/lib/supabase/server";
+import type { Dict } from "@/lib/locale";
 
-export default function SettingsForm({ viewer }: { viewer: Viewer }) {
+export default function SettingsForm({ viewer, t }: { viewer: Viewer; t: Dict }) {
   const [state, action, pending] = useActionState<SettingsState, FormData>(
     updateProfile,
     {}
@@ -15,7 +16,7 @@ export default function SettingsForm({ viewer }: { viewer: Viewer }) {
     <form action={action} className="max-w-md space-y-4">
       <div>
         <label htmlFor="name" className="mb-1.5 block text-sm font-medium">
-          Display name
+          {t.coach.displayName}
         </label>
         <input
           id="name"
@@ -27,13 +28,13 @@ export default function SettingsForm({ viewer }: { viewer: Viewer }) {
         />
       </div>
       <div>
-        <span className="mb-1.5 block text-sm font-medium">Email</span>
+        <span className="mb-1.5 block text-sm font-medium">{t.settings.emailLabel}</span>
         <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-slate-400">
           {viewer.email ?? "—"}
         </div>
       </div>
       <div>
-        <span className="mb-1.5 block text-sm font-medium">Role</span>
+        <span className="mb-1.5 block text-sm font-medium">{t.settings.roleLabel}</span>
         <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm capitalize text-slate-300">
           {viewer.role}
           {viewer.membership ? ` • ${viewer.membership}` : ""}
@@ -41,11 +42,11 @@ export default function SettingsForm({ viewer }: { viewer: Viewer }) {
       </div>
       <div>
         <span className="mb-1.5 block text-sm font-medium">
-          Your user ID <span className="font-normal text-slate-500">(share with your coach to link up)</span>
+          {t.settings.userIdLabel} <span className="font-normal text-slate-500">{t.settings.shareHint}</span>
         </span>
         <div className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
           <span className="min-w-0 flex-1 truncate font-mono text-xs text-slate-400">{viewer.id}</span>
-          <CopyIdButton id={viewer.id} label="Copy your user ID" />
+          <CopyIdButton id={viewer.id} label={t.settings.copyId} copiedLabel={t.common.copied} />
         </div>
       </div>
 
@@ -56,7 +57,7 @@ export default function SettingsForm({ viewer }: { viewer: Viewer }) {
       )}
       {state.ok && (
         <p role="status" className="rounded-xl bg-green-500/10 px-4 py-3 text-sm text-green-400">
-          Saved.
+          {t.common.saved}
         </p>
       )}
 
@@ -65,7 +66,7 @@ export default function SettingsForm({ viewer }: { viewer: Viewer }) {
         disabled={pending}
         className="rounded-full bg-brand-500 px-7 py-2.5 text-sm font-bold text-white shadow-lg shadow-brand-500/30 transition-all hover:bg-brand-400 disabled:opacity-60"
       >
-        {pending ? "Saving…" : "Save changes"}
+        {pending ? t.common.saving : t.common.saveChanges}
       </button>
     </form>
   );

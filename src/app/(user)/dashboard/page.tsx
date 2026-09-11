@@ -66,14 +66,14 @@ export default async function UserDashboard() {
         })}
       </p>
       <h1 className="mt-1 text-3xl font-extrabold tracking-tight">
-        {t.pages.hey} {viewer?.name ?? "there"} {t.pages.letsTrain}
+        {t.pages.hey} {viewer?.name ?? ""} {t.pages.letsTrain}
       </h1>
 
       {liveLink ? (
         <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-2xl border border-green-500/30 bg-green-500/[0.07] px-5 py-3.5 text-sm">
           <span className="font-bold text-green-400">
-            {locale === "ar" ? "تتدرب مع" : "Training with"}{" "}
-            {liveLink.coach_name ?? "Coach"}
+            {t.home.trainingWith}{" "}
+            {liveLink.coach_name ?? t.home.yourCoachWord}
           </span>
           <span className="text-slate-400">
             {liveLink.weeks} {t.subs.weeks} • {t.subs.activeUntil}{" "}
@@ -92,9 +92,7 @@ export default async function UserDashboard() {
         </p>
       ) : pendingInvite ? (
         <p className="mt-4 rounded-2xl border border-brand-500/30 bg-brand-500/[0.07] px-5 py-3.5 text-sm text-slate-300">
-          {locale === "ar"
-            ? `طلب ربط من ${pendingInvite.coach_name ?? "مدربك"} — يُفعَّل بعد إتمام الدفع.`
-            : `Link request from ${pendingInvite.coach_name ?? "your coach"} — activates after payment clears.`}
+          {t.home.linkReqFrom} {pendingInvite.coach_name ?? t.home.yourCoachWord} — {t.home.activatesAfter}
         </p>
       ) : locked ? (
         <Link
@@ -106,7 +104,7 @@ export default async function UserDashboard() {
         </Link>
       ) : appSub ? (
         <p className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-3.5 text-sm text-slate-400">
-          {locale === "ar" ? "السجل مفتوح حتى" : "History unlocked until"}{" "}
+          {t.home.historyUntil}{" "}
           {fmt(appSub.ends_at)} • {t.subs.soloNote}
         </p>
       ) : (

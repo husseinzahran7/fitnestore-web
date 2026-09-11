@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { logWeight, uploadPhoto } from "@/lib/progress-actions";
 import type { LivePhoto } from "@/lib/progress-queries";
+import type { Dict } from "@/lib/locale";
 import {
   CartesianGrid,
   Line,
@@ -13,10 +14,6 @@ import {
   YAxis,
 } from "recharts";
 import {
-  userBodyMeasurements,
-  userProgressPhotos,
-  userStrengthProgress,
-  userWeightProgress,
   type MeasurementPoint,
   type ProgressPhoto,
   type StrengthPoint,
@@ -33,12 +30,13 @@ const tipStyle = {
 };
 
 export default function UserProgress({
-  weight = userWeightProgress,
-  strength = userStrengthProgress,
-  measurements = userBodyMeasurements,
-  photos = userProgressPhotos,
+  weight = [],
+  strength = [],
+  measurements = [],
+  photos = [],
   photosLive = [],
   live = false,
+  t,
 }: {
   weight?: WeightPoint[];
   strength?: StrengthPoint[];
@@ -46,28 +44,31 @@ export default function UserProgress({
   photos?: ProgressPhoto[];
   photosLive?: LivePhoto[];
   live?: boolean;
-} = {}) {
+  t: Dict;
+}) {
   const [tab, setTab] = useState<(typeof TABS)[number]>("weight");
+  const tabLabel = (tb: (typeof TABS)[number]) =>
+    tb === "weight" ? t.progress.tabWeight : tb === "strength" ? t.progress.tabStrength : tb === "measurements" ? t.progress.tabMeasure : t.progress.tabPhotos;
 
   return (
     <div>
       <div className="grid max-w-lg grid-cols-4 gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
-        {TABS.map((t) => (
+        {TABS.map((tb) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={tb}
+            onClick={() => setTab(tb)}
             className={`rounded-full py-2 text-xs font-semibold capitalize transition-colors sm:text-sm ${
-              tab === t ? "bg-brand-500 text-white" : "text-slate-400 hover:text-white"
+              tab === tb ? "bg-brand-500 text-white" : "text-slate-400 hover:text-white"
             }`}
           >
-            {t === "measurements" ? "Measure" : t}
+            {tabLabel(tb)}
           </button>
         ))}
       </div>
 
       {tab === "weight" && (
         <>
-          {live && <WeightLogForm />}
+          {live && <WeightLogForm t={t} />}
           <div className={`mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-5 ${chartBox}`}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={weight} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
@@ -103,10 +104,10 @@ export default function UserProgress({
           <table className="w-full min-w-[480px] text-start text-sm">
             <thead>
               <tr className="border-b border-white/10 text-slate-400">
-                <th className="px-5 py-3 font-semibold">Week</th>
-                <th className="px-5 py-3 font-semibold">Chest (in)</th>
-                <th className="px-5 py-3 font-semibold">Waist (in)</th>
-                <th className="px-5 py-3 font-semibold">Arms (in)</th>
+                <th className="px-5 py-3 font-semibold">{t.progress.weekCol}</th>
+                <th className="px-5 py-3 font-semibold">{t.progress.chestCol}</th>
+                <th className="px-5 py-3 font-semibold">{t.progress.waistCol}</th>
+                <th className="px-5 py-3 font-semibold">{t.progress.armsCol}</th>
               </tr>
             </thead>
             <tbody>
@@ -125,12 +126,12 @@ export default function UserProgress({
 
       {tab === "photos" && (
         <>
-          {live && <PhotoUploadForm />}
+          {live && <PhotoUploadForm t={t} />}
           {live ? (
             <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
               {photosLive.length === 0 && (
                 <p className="col-span-full rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-sm text-slate-400">
-                  No photos yet.
+                  {t.progress.noPhotos}
                 </p>
               )}
               {photosLive.map((p) => (
@@ -144,7 +145,7 @@ export default function UserProgress({
         <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {photos.length === 0 ? (
             <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-sm text-slate-400">
-              No photos yet.
+              {t.progress.noPhotos}
             </p>
           ) : (
             photos.map((p) => (
@@ -167,7 +168,7 @@ export default function UserProgress({
   );
 }
 
-function WeightLogForm() {
+function WeightLogForm({ t }: { t: Dict }) {
   const [state, action, pending] = useActionState(logWeight, {});
 
   return (
@@ -177,7 +178,7 @@ function WeightLogForm() {
     >
       <div className="flex-1">
         <label htmlFor="weight" className="mb-1.5 block text-sm font-medium">
-          Log today&apos;s weight (kg)
+          {t.progress.logWeightLabel}
         </label>
         <input
           id="weight"
@@ -195,7 +196,7 @@ function WeightLogForm() {
         disabled={pending}
         className="rounded-full bg-brand-500 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-brand-400 disabled:opacity-60"
       >
-        {pending ? "Saving…" : "Log weight"}
+        {pending ? t.common.saving : t.progress.logWeightBtn}
       </button>
       {state?.error && (
         <p role="alert" className="text-xs text-red-400 sm:self-center">
@@ -204,14 +205,14 @@ function WeightLogForm() {
       )}
       {state?.ok && (
         <p role="status" className="text-xs text-green-400 sm:self-center">
-          Saved.
+          {t.common.saved}
         </p>
       )}
     </form>
   );
 }
 
-function PhotoUploadForm() {
+function PhotoUploadForm({ t }: { t: Dict }) {
   const [state, action, pending] = useActionState(uploadPhoto, {});
 
   return (
@@ -221,7 +222,7 @@ function PhotoUploadForm() {
     >
       <div className="flex-1">
         <label htmlFor="photo" className="mb-1.5 block text-sm font-medium">
-          Upload progress photo (JPEG/PNG/WebP, max 5 MB)
+          {t.progress.photoLabel}
         </label>
         <input
           id="photo"
@@ -237,7 +238,7 @@ function PhotoUploadForm() {
         disabled={pending}
         className="rounded-full bg-brand-500 px-6 py-2.5 text-sm font-bold text-white transition-all hover:bg-brand-400 disabled:opacity-60"
       >
-        {pending ? "Uploading…" : "Upload"}
+        {pending ? t.coach.uploading : t.coach.uploadBtn}
       </button>
       {state?.error && (
         <p role="alert" className="text-xs text-red-400 sm:self-center">
@@ -246,7 +247,7 @@ function PhotoUploadForm() {
       )}
       {state?.ok && (
         <p role="status" className="text-xs text-green-400 sm:self-center">
-          Uploaded.
+          {t.coach.uploaded}
         </p>
       )}
     </form>

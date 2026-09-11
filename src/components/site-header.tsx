@@ -5,17 +5,17 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import AuthLinks from "@/components/auth-links";
 import LocaleToggle from "@/components/locale-toggle";
-import type { Locale } from "@/lib/locale";
-
-const links = [
-  { label: "Coaches", href: "#coaches" },
-  { label: "Clients", href: "#clients" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "Find a coach", href: "/coaches" },
-];
+import { dictionary, type Dict, type Locale } from "@/lib/locale";
 
 export default function SiteHeader({ locale = "en" }: { locale?: Locale }) {
   const [open, setOpen] = useState(false);
+  const t: Dict = dictionary(locale);
+  const links = [
+    { label: t.site.navCoaches, href: "#coaches" },
+    { label: t.site.navClients, href: "#clients" },
+    { label: t.site.navPricing, href: "#pricing" },
+    { label: t.site.findCoach, href: "/coaches" },
+  ];
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-white/10 bg-ink-950/80 backdrop-blur-lg">
@@ -41,7 +41,7 @@ export default function SiteHeader({ locale = "en" }: { locale?: Locale }) {
 
         <div className="hidden items-center gap-1 md:flex">
           <LocaleToggle current={locale} />
-          <AuthLinks />
+          <AuthLinks t={t} />
         </div>
 
         <div className="flex items-center gap-1 md:hidden">
@@ -49,7 +49,7 @@ export default function SiteHeader({ locale = "en" }: { locale?: Locale }) {
           <button
             className="rounded-lg p-2 text-slate-200 hover:bg-white/10"
             onClick={() => setOpen(!open)}
-            aria-label={open ? "Close menu" : "Open menu"}
+            aria-label={open ? t.site.closeMenu : t.site.openMenu}
           >
             {open ? <X size={22} /> : <Menu size={22} />}
           </button>
@@ -75,7 +75,7 @@ export default function SiteHeader({ locale = "en" }: { locale?: Locale }) {
                   {l.label}
                 </a>
               ))}
-              <AuthLinks mobile />
+              <AuthLinks mobile t={t} />
             </div>
           </motion.nav>
         )}

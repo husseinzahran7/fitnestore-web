@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 
-export default function CopyIdButton({ id, label = "Copy full ID" }: { id: string; label?: string }) {
+export default function CopyIdButton({ id, label = "Copy full ID", copiedLabel = "Copied" }: { id: string; label?: string; copiedLabel?: string }) {
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -26,8 +26,8 @@ export default function CopyIdButton({ id, label = "Copy full ID" }: { id: strin
     <button
       type="button"
       onClick={copy}
-      aria-label={copied ? "ID copied" : label}
-      title={copied ? "Copied" : label}
+      aria-label={copied ? `${id} ${copiedLabel}` : label}
+      title={copied ? copiedLabel : label}
       className="shrink-0 rounded-md p-1 text-slate-500 transition-colors hover:bg-white/10 hover:text-white"
     >
       {copied ? <Check size={13} className="text-green-400" /> : <Copy size={13} />}

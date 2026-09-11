@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition } from "react";
 import { CalendarClock } from "lucide-react";
 import type { ScheduleItem } from "@/data/mockSchedule";
+import type { Dict } from "@/lib/locale";
 
 const FILTERS = ["all", "upcoming", "completed", "cancelled"] as const;
 
@@ -16,12 +17,16 @@ export default function ScheduleBoard({
   items,
   icsBase,
   onStatus,
+  t,
 }: {
   items: ScheduleItem[];
   icsBase?: string;
   onStatus?: (id: string, status: string) => Promise<{ error?: string }>;
+  t: Dict;
 }) {
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
+  const filterLabel = (f: (typeof FILTERS)[number]) =>
+    f === "all" ? t.common.all : f === "upcoming" ? t.common.upcoming : f === "completed" ? t.common.completed : t.common.cancelled;
 
   const grouped = useMemo(() => {
     const list =
@@ -57,22 +62,22 @@ export default function ScheduleBoard({
           <div className="text-3xl font-extrabold">
             {items.filter((s) => s.status === "upcoming").length}
           </div>
-          <div className="mt-1 text-sm text-slate-400">Upcoming sessions</div>
+          <div className="mt-1 text-sm text-slate-400">{t.coach.upcomingSessions}</div>
         </div>
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-center">
           <div className="text-3xl font-extrabold">
             {new Set(items.map((s) => s.clientId)).size}
           </div>
-          <div className="mt-1 text-sm text-slate-400">Active clients</div>
+          <div className="mt-1 text-sm text-slate-400">{t.coach.activeClients}</div>
         </div>
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 text-center">
           <div className="text-3xl font-extrabold">{upcomingHours}h</div>
-          <div className="mt-1 text-sm text-slate-400">Scheduled hours</div>
+          <div className="mt-1 text-sm text-slate-400">{t.coach.scheduledHours}</div>
         </div>
       </div>
 
       <div className="mt-6 flex items-center justify-between">
-        <h2 className="text-xl font-bold">Sessions</h2>
+        <h2 className="text-xl font-bold">{t.coach.sessions}</h2>
         <div className="flex gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
           {FILTERS.map((f) => (
             <button
@@ -84,7 +89,7 @@ export default function ScheduleBoard({
                   : "text-slate-400 hover:text-white"
               }`}
             >
-              {f}
+              {filterLabel(f)}
             </button>
           ))}
         </div>
@@ -93,7 +98,7 @@ export default function ScheduleBoard({
       <div className="mt-4 space-y-6">
         {grouped.length === 0 && (
           <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-sm text-slate-400">
-            No sessions found.
+            {t.coach.noSessions}
           </p>
         )}
         {grouped.map(([date, sessions]) => (
@@ -127,18 +132,18 @@ export default function ScheduleBoard({
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusStyle(s.status)}`}
                     >
-                      {s.status}
+                      {s.status === "upcoming" ? t.common.upcoming : s.status === "completed" ? t.common.completed : t.common.cancelled}
                     </span>
                     {icsBase && (
                       <a
                         href={`${icsBase}/${s.id}/ics`}
                         className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-300 hover:bg-white/20 hover:text-white"
                       >
-                        Add to calendar
+                        {t.common.addToCalendar}
                       </a>
                     )}
                     {onStatus && s.status === "upcoming" && (
-                      <StatusButtons id={s.id} onStatus={onStatus} />
+                      <StatusButtons id={s.id} onStatus={onStatus} t={t} />
                     )}
                   </div>
                 </div>
@@ -154,9 +159,11 @@ export default function ScheduleBoard({
 function StatusButtons({
   id,
   onStatus,
+  t,
 }: {
   id: string;
   onStatus: (id: string, status: string) => Promise<{ error?: string }>;
+  t: Dict;
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -175,7 +182,7 @@ function StatusButtons({
         disabled={pending}
         className="rounded-full bg-green-500/15 px-3 py-1 text-xs font-bold text-green-400 hover:bg-green-500/25 disabled:opacity-50"
       >
-        Done
+        {t.common.done}
       </button>
       <button
         type="button"
@@ -183,7 +190,7 @@ function StatusButtons({
         disabled={pending}
         className="rounded-full bg-red-500/15 px-3 py-1 text-xs font-bold text-red-400 hover:bg-red-500/25 disabled:opacity-50"
       >
-        Cancel
+        {t.common.cancel}
       </button>
       {error && <span className="text-xs text-red-400">{error}</span>}
     </span>

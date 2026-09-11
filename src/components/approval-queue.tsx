@@ -3,18 +3,21 @@
 import { useActionState } from "react";
 import CopyIdButton from "@/components/copy-id";
 import { decideApproval, type PendingCoach } from "@/lib/coaches";
+import type { Dict } from "@/lib/locale";
 
 export default function ApprovalQueue({
   coaches,
+  t,
 }: {
   coaches: PendingCoach[];
+  t: Dict;
 }) {
   const [state, action, pending] = useActionState(decideApproval, {});
 
   if (coaches.length === 0) {
     return (
       <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-sm text-slate-400">
-        No coach listings yet.
+        {t.common.noResults}
       </p>
     );
   }
@@ -38,12 +41,12 @@ export default function ApprovalQueue({
                     : "bg-orange-500/15 text-orange-400"
                 }`}
               >
-                {c.approved ? "Approved" : "Pending"}
+                {c.approved ? t.coach.approved : t.common.pending}
               </span>
-              <span className="text-xs text-slate-500">{c.years} yrs</span>
+              <span className="text-xs text-slate-500">{c.years} {t.coach.yrs}</span>
               <span className="flex items-center gap-1 font-mono text-xs text-slate-500">
                 {c.profileId.slice(0, 8)}…
-                <CopyIdButton id={c.profileId} label="Copy full coach ID" />
+                <CopyIdButton id={c.profileId} label={t.coach.copyFullId} copiedLabel={t.common.copied} />
               </span>
             </div>
             {c.bio && (
@@ -59,7 +62,7 @@ export default function ApprovalQueue({
                 disabled={pending}
                 className="rounded-full bg-green-500 px-5 py-2 text-xs font-bold text-white hover:bg-green-400 disabled:opacity-50"
               >
-                Approve
+                {t.common.approve}
               </button>
             ) : (
               <button
@@ -69,7 +72,7 @@ export default function ApprovalQueue({
                 disabled={pending}
                 className="rounded-full bg-white/10 px-5 py-2 text-xs font-bold text-slate-300 hover:bg-white/20 disabled:opacity-50"
               >
-                Unlist
+                {t.common.unlist}
               </button>
             )}
           </div>

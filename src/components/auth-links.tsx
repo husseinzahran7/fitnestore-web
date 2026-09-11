@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
+import type { Dict } from "@/lib/locale";
 
 // Public header auth area: signed-out visitors get Sign in + Start coaching,
 // signed-in users get Open app (their role home) — no more dead bounce.
-export default function AuthLinks({ mobile }: { mobile?: boolean }) {
+export default function AuthLinks({ mobile, t }: { mobile?: boolean; t: Dict }) {
   const [home, setHome] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
 
@@ -29,7 +30,7 @@ export default function AuthLinks({ mobile }: { mobile?: boolean }) {
             : "inline-flex items-center gap-1.5 rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-500/30 transition-colors hover:bg-brand-400"
         }
       >
-        Open app
+        {t.site.openApp}
         <ArrowRight size={16} className="rtl:-scale-x-100" />
       </a>
     );
@@ -42,7 +43,7 @@ export default function AuthLinks({ mobile }: { mobile?: boolean }) {
           href="/login"
           className="text-sm font-medium text-slate-300 transition-colors hover:text-white"
         >
-          Sign in
+          {t.auth.signIn}
         </a>
       )}
       <a
@@ -53,7 +54,7 @@ export default function AuthLinks({ mobile }: { mobile?: boolean }) {
             : "inline-flex items-center gap-1.5 rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-500/30 transition-colors hover:bg-brand-400"
         }
       >
-        Start coaching
+        {t.site.startCoaching}
         <ArrowRight size={16} className="rtl:-scale-x-100" />
       </a>
     </>

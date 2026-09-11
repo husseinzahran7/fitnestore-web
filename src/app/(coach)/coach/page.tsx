@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { createClient, getViewer } from "@/lib/supabase/server";
+import { getDict } from "@/lib/i18n";
 
 async function coachStats() {
   type Recent = { id: string; name: string; plan: string; status: string };
@@ -43,19 +44,20 @@ async function coachStats() {
 export default async function CoachDashboard() {
   const viewer = await getViewer();
   const stats = await coachStats();
+  const t = await getDict();
 
   return (
     <div>
-      <h1 className="text-3xl font-extrabold tracking-tight">Coach Dashboard</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight">{t.coach.dashboard}</h1>
       <p className="mt-1 text-sm text-slate-400">
-        {viewer?.name ?? "Coach"} — your roster at a glance.
+        {viewer?.name ?? ""} — {t.coach.rosterGlance}
       </p>
 
       <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
         {[
-          { v: String(stats.total), l: "Total clients" },
-          { v: String(stats.active), l: "Active now" },
-          { v: String(stats.total - stats.active), l: "Pending / paused" },
+          { v: String(stats.total), l: t.coach.totalClients },
+          { v: String(stats.active), l: t.coach.activeNow },
+          { v: String(stats.total - stats.active), l: t.coach.pendingPaused },
         ].map((s) => (
           <div
             key={s.l}
@@ -69,17 +71,17 @@ export default async function CoachDashboard() {
 
       <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold">Recent clients</h2>
+          <h2 className="text-lg font-bold">{t.coach.recentClients}</h2>
           <Link
             href="/coach/clients"
             className="inline-flex items-center gap-1 text-sm font-semibold text-brand-400 hover:text-brand-500"
           >
-            All clients <ArrowRight size={15} />
+            {t.coach.allClients} <ArrowRight size={15} />
           </Link>
         </div>
         {stats.recent.length === 0 ? (
           <p className="mt-4 text-sm text-slate-400">
-            No clients yet. They appear here once assigned to you.
+            {t.coach.noClientsYet}
           </p>
         ) : (
           <ul className="mt-4 divide-y divide-white/10">

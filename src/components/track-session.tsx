@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { saveWorkout } from "@/lib/tracking-actions";
 import type { TrackExercise, TrackHistory } from "@/lib/tracking";
+import type { Dict } from "@/lib/locale";
 
 interface SetRow {
   weight: string;
@@ -23,11 +24,13 @@ export default function TrackSession({
   title,
   exercises,
   history,
+  t,
 }: {
   sessionId: string;
   title: string;
   exercises: TrackExercise[];
   history: TrackHistory[];
+  t: Dict;
 }) {
   const [order, setOrder] = useState<string[]>(exercises.map((e) => e.id));
   const [sets, setSets] = useState<Record<string, SetRow[]>>(() =>
@@ -115,7 +118,7 @@ export default function TrackSession({
                     type="button"
                     onClick={() => move(exId, -1)}
                     disabled={pos === 0}
-                    aria-label={`Move ${ex.name} up`}
+                    aria-label={`${t.track.move} ${ex.name} ${t.track.up}`}
                     className="rounded-lg px-2 py-1 text-slate-400 hover:bg-white/10 disabled:opacity-30"
                   >
                     ↑
@@ -124,7 +127,7 @@ export default function TrackSession({
                     type="button"
                     onClick={() => move(exId, 1)}
                     disabled={pos === order.length - 1}
-                    aria-label={`Move ${ex.name} down`}
+                    aria-label={`${t.track.move} ${ex.name} ${t.track.down}`}
                     className="rounded-lg px-2 py-1 text-slate-400 hover:bg-white/10 disabled:opacity-30"
                   >
                     ↓
@@ -141,36 +144,36 @@ export default function TrackSession({
                       value={s.weight}
                       onChange={(e) => patch(exId, i, "weight", e.target.value)}
                       inputMode="decimal"
-                      placeholder="kg"
-                      aria-label={`Set ${i + 1} weight in kilos`}
+                      placeholder={t.coach.kgShort}
+                      aria-label={`${t.track.setWord} ${i + 1} ${t.track.weightKilos}`}
                       className="w-full min-w-0 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-brand-500"
                     />
                     <input
                       value={s.reps}
                       onChange={(e) => patch(exId, i, "reps", e.target.value)}
                       inputMode="numeric"
-                      placeholder="reps"
-                      aria-label={`Set ${i + 1} reps`}
+                      placeholder={t.track.repsWord}
+                      aria-label={`${t.track.setWord} ${i + 1} ${t.track.repsWord}`}
                       className="w-full min-w-0 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-sm outline-none placeholder:text-slate-500 focus:border-brand-500"
                     />
                     <button
                       type="button"
                       onClick={() => patch(exId, i, "warmup", !s.warmup)}
                       aria-pressed={s.warmup}
-                      title="Warm-up set"
+                      title={t.track.warmupTitle}
                       className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${
                         s.warmup
                           ? "bg-orange-500/20 text-orange-400"
                           : "bg-white/10 text-slate-400"
                       }`}
                     >
-                      WU
+                      {t.coach.warmupShort}
                     </button>
                     <button
                       type="button"
                       onClick={() => removeSet(exId, i)}
                       disabled={rows.length <= 1}
-                      aria-label={`Remove set ${i + 1}`}
+                      aria-label={`${t.track.removeSet} ${i + 1}`}
                       className="shrink-0 rounded-lg px-2 py-1 text-slate-500 hover:bg-white/10 hover:text-red-400 disabled:opacity-30"
                     >
                       ✕
@@ -183,7 +186,7 @@ export default function TrackSession({
                 onClick={() => addSet(exId)}
                 className="mt-2 text-xs font-semibold text-brand-400 hover:text-brand-500"
               >
-                + Add set
+                {t.track.addSet}
               </button>
             </section>
           );
@@ -196,9 +199,9 @@ export default function TrackSession({
         disabled={pending}
         className="mt-5 w-full rounded-full bg-brand-500 py-3.5 text-sm font-bold text-white shadow-xl shadow-brand-500/30 transition-all hover:bg-brand-400 disabled:opacity-60"
       >
-        {pending ? "Saving…" : "Finish workout"}
+        {pending ? t.common.saving : t.common.finishWorkout}
       </button>
-      <RestTimer />
+      <RestTimer t={t} />
       {result.error && (
         <p role="alert" className="mt-3 rounded-xl bg-red-500/10 px-4 py-3 text-sm text-red-400">
           {result.error}
@@ -206,13 +209,13 @@ export default function TrackSession({
       )}
       {result.ok && (
         <p role="status" className="mt-3 rounded-xl bg-green-500/10 px-4 py-3 text-sm text-green-400">
-          Workout saved. History grows below on reload.
+          {t.track.savedMsg}
         </p>
       )}
 
       {history.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-lg font-bold">History</h2>
+          <h2 className="text-lg font-bold">{t.track.historyTitle}</h2>
           <ul className="mt-3 space-y-2">
             {history.map((h) => (
               <li
@@ -220,7 +223,7 @@ export default function TrackSession({
                 className="flex justify-between rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm"
               >
                 <span className="font-semibold">{h.performedOn}</span>
-                <span className="text-slate-400">logged</span>
+                <span className="text-slate-400">{t.track.loggedWord}</span>
               </li>
             ))}
           </ul>
@@ -238,7 +241,7 @@ function fmt(total: number) {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-function RestTimer() {
+function RestTimer({ t }: { t: Dict }) {
   const [seconds, setSeconds] = useState(90);
   const [left, setLeft] = useState<number | null>(null);
   const endRef = useRef<number>(0);
@@ -264,7 +267,7 @@ function RestTimer() {
   return (
     <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-bold">Rest timer</span>
+        <span className="text-sm font-bold">{t.track.restTimer}</span>
         <span
           className={`font-mono text-2xl font-extrabold tabular-nums ${
             left === 0 ? "text-green-400" : "text-white"
@@ -294,7 +297,7 @@ function RestTimer() {
             onClick={() => setLeft(null)}
             className="rounded-full px-3.5 py-1.5 text-xs font-bold text-slate-400 hover:text-white"
           >
-            Reset
+            {t.track.resetBtn}
           </button>
         ) : (
           <button
@@ -302,7 +305,7 @@ function RestTimer() {
             onClick={() => start(seconds)}
             className="rounded-full bg-brand-500/20 px-3.5 py-1.5 text-xs font-bold text-brand-400 hover:bg-brand-500/30"
           >
-            {left === 0 ? "Again" : "Start"}
+            {left === 0 ? t.track.againBtn : t.common.start}
           </button>
         )}
       </div>

@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
+import { getDict } from "@/lib/i18n";
+import type { Dict } from "@/lib/locale";
 
 interface Policy {
   slug: string;
@@ -7,50 +9,54 @@ interface Policy {
   updated_at: string;
 }
 
-const FALLBACK: Policy[] = [
-  {
-    slug: "terms-of-service",
-    title: "Terms of Service",
-    body: "GYMers connects coaches with clients for training programs, nutrition plans, and progress tracking. Coaches are responsible for the safety and suitability of the programs they prescribe. Accounts breaking platform rules may be suspended.",
-    updated_at: "2026-01-01",
-  },
-  {
-    slug: "privacy-policy",
-    title: "Privacy Policy",
-    body: "We store your profile, training data, messages, and progress photos to run the service. Coaches see their own clients' data; admins see platform data. We never sell personal data. Contact support to export or delete your data.",
-    updated_at: "2026-01-01",
-  },
-  {
-    slug: "cookie-policy",
-    title: "Cookie Policy",
-    body: "We use strictly-necessary cookies for sign-in sessions and preferences. No advertising trackers. Disabling cookies will sign you out.",
-    updated_at: "2026-01-01",
-  },
-];
+function fallbackPolicies(t: Dict): Policy[] {
+  return [
+    {
+      slug: "terms-of-service",
+      title: "Terms of Service",
+      body: t.admin.fallbackTerms,
+      updated_at: "2026-01-01",
+    },
+    {
+      slug: "privacy-policy",
+      title: "Privacy Policy",
+      body: t.admin.fallbackPrivacy,
+      updated_at: "2026-01-01",
+    },
+    {
+      slug: "cookie-policy",
+      title: "Cookie Policy",
+      body: t.admin.fallbackCookies,
+      updated_at: "2026-01-01",
+    },
+  ];
+}
 
-async function loadPolicies(): Promise<{ policies: Policy[]; live: boolean }> {
+async function loadPolicies(): Promise<{ policies: Policy[] | null }> {
   try {
     const supabase = await createClient();
     const { data, error } = await supabase
       .from("site_policies")
       .select("slug, title, body, updated_at")
       .order("title");
-    if (error || !data || data.length === 0) return { policies: FALLBACK, live: false };
-    return { policies: data as Policy[], live: true };
+    if (error || !data || data.length === 0) return { policies: null };
+    return { policies: data as Policy[] };
   } catch {
-    return { policies: FALLBACK, live: false };
+    return { policies: null };
   }
 }
 
 export default async function AdminPoliciesPage() {
-  const { policies, live } = await loadPolicies();
+  const [{ policies: livePolicies }, t] = await Promise.all([loadPolicies(), getDict()]);
+  const live = !!livePolicies;
+  const policies = livePolicies ?? fallbackPolicies(t);
 
   return (
     <div>
-      <h1 className="text-3xl font-extrabold tracking-tight">Policies</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight">{t.nav.policies}</h1>
       <p className="mt-1 text-sm text-slate-400">
-        Platform legal content.
-        {!live && " Showing built-in copy (connect Supabase to manage live)."}
+        {t.admin.policiesDesc}
+        {!live && ` ${t.admin.fallbackNote}`}
       </p>
       <div className="mt-6 space-y-4">
         {policies.map((p) => (

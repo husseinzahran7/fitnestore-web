@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient, requireActive } from "@/lib/supabase/server";
+import { getDict } from "@/lib/i18n";
 
 export type SaveState = { error?: string; ok?: boolean };
 
@@ -27,27 +28,28 @@ export async function saveWorkout(
   try {
     items = JSON.parse(String(formData.get("payload") ?? "[]"));
   } catch {
-    return { error: "Invalid workout data." };
+    return { error: (await getDict()).errors.badWorkout };
   }
+  const t = await getDict();
   if (!sessionId || !Array.isArray(items) || items.length === 0) {
-    return { error: "Nothing to save." };
+    return { error: t.errors.nothingSave };
   }
 
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet — workout not saved." };
+    return { error: t.errors.noSupabase };
   }
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You're signed out. Sign in again." };
-  if (!(await requireActive())) return { error: "Account suspended." };
+  if (!user) return { error: t.errors.signedOut };
+  if (!(await requireActive())) return { error: t.errors.suspended };
 
   const { ensureMyClientId } = await import("@/lib/ensure-client");
   const clientId = await ensureMyClientId(supabase, user.id);
-  if (!clientId) return { error: "No client record found." };
+  if (!clientId) return { error: t.errors.noClientRecord };
 
   const { data: session } = await supabase
     .from("workout_sessions")
@@ -55,7 +57,7 @@ export async function saveWorkout(
     .eq("id", sessionId)
     .eq("client_id", clientId)
     .single();
-  if (!session) return { error: "Session not found." };
+  if (!session) return { error: t.errors.sessionMissing };
 
   const rows: Array<{
     exercise_id: string;
@@ -66,7 +68,7 @@ export async function saveWorkout(
   }> = [];
   for (const ex of items) {
     if (!ex || typeof ex.exerciseId !== "string" || !Array.isArray(ex.sets)) {
-      return { error: "Invalid workout data." };
+      return { error: t.errors.badWorkout };
     }
     // Blank rows are skipped — only logged sets persist.
     const logged = ex.sets.filter(
@@ -76,7 +78,7 @@ export async function saveWorkout(
       const w = s.weight.trim() === "" ? null : Number(s.weight);
       const r = s.reps.trim() === "" ? null : parseInt(s.reps, 10);
       if ((w != null && (!Number.isFinite(w) || w < 0)) || (r != null && (!Number.isInteger(r) || r < 0))) {
-        return { error: "Weights and reps must be positive numbers." };
+        return { error: t.errors.badNumbers };
       }
       rows.push({
         exercise_id: ex.exerciseId,
@@ -87,7 +89,7 @@ export async function saveWorkout(
       });
     });
   }
-  if (rows.length === 0) return { error: "Log at least one set." };
+  if (rows.length === 0) return { error: t.errors.logSet };
 
   try {
     const { data: log, error: logError } = await supabase
@@ -95,12 +97,12 @@ export async function saveWorkout(
       .insert({ client_id: clientId, session_id: sessionId, title })
       .select("id")
       .single();
-    if (logError || !log) return { error: "Couldn't save. Try again." };
+    if (logError || !log) return { error: t.errors.cantSave };
 
     const { error: setsError } = await supabase.from("set_logs").insert(
       rows.map((r) => ({ ...r, log_id: log.id }))
     );
-    if (setsError) return { error: "Couldn't save sets. Try again." };
+    if (setsError) return { error: t.errors.cantSaveSets };
 
     // Persist drag-drop order (owner-reorder policy covers this).
     for (const ex of items) {
@@ -110,7 +112,7 @@ export async function saveWorkout(
         .eq("id", ex.exerciseId);
     }
   } catch {
-    return { error: "Couldn't save. Try again." };
+    return { error: t.errors.cantSave };
   }
 
   revalidatePath("/dashboard/schedule");

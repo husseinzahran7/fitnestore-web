@@ -7,6 +7,24 @@ export const SPECIALTIES = [
   "Conditioning",
 ] as const;
 
+// Stored values stay English (filters + DB); UI reads display labels.
+export const SPEC_LABEL: Record<
+  (typeof SPECIALTIES)[number],
+  | "specStrength"
+  | "specCalisthenics"
+  | "specFootball"
+  | "specYoga"
+  | "specNutrition"
+  | "specConditioning"
+> = {
+  Strength: "specStrength",
+  Calisthenics: "specCalisthenics",
+  Football: "specFootball",
+  Yoga: "specYoga",
+  Nutrition: "specNutrition",
+  Conditioning: "specConditioning",
+};
+
 export interface CoachCard {
   id: string;
   name: string;

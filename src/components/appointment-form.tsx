@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { createAppointment } from "@/lib/schedule";
 import type { CoachClientLite } from "@/lib/nutrition-queries";
+import type { Dict } from "@/lib/locale";
 
 const input =
   "w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm outline-none placeholder:text-slate-500 focus:border-brand-500";
@@ -10,8 +11,10 @@ const label = "mb-1.5 block text-sm font-medium";
 
 export default function AppointmentForm({
   clients,
+  t,
 }: {
   clients: CoachClientLite[];
+  t: Dict;
 }) {
   const [state, action, pending] = useActionState(createAppointment, {});
   const today = new Date().toISOString().slice(0, 10);
@@ -23,11 +26,11 @@ export default function AppointmentForm({
       action={action}
       className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-5"
     >
-      <h2 className="font-bold">Plan a session</h2>
+      <h2 className="font-bold">{t.coach.planSession}</h2>
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label htmlFor="appt-client" className={label}>
-            Client
+            {t.coach.client}
           </label>
           <select id="appt-client" name="clientId" required className={input}>
             {clients.map((c) => (
@@ -39,7 +42,7 @@ export default function AppointmentForm({
         </div>
         <div>
           <label htmlFor="appt-type" className={label}>
-            Session type
+            {t.coach.sessionType}
           </label>
           <input
             id="appt-type"
@@ -51,7 +54,7 @@ export default function AppointmentForm({
         </div>
         <div>
           <label htmlFor="appt-date" className={label}>
-            Date
+            {t.coach.date}
           </label>
           <input
             id="appt-date"
@@ -65,7 +68,7 @@ export default function AppointmentForm({
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label htmlFor="appt-start" className={label}>
-              Start
+              {t.coach.startTime}
             </label>
             <input
               id="appt-start"
@@ -78,7 +81,7 @@ export default function AppointmentForm({
           </div>
           <div>
             <label htmlFor="appt-end" className={label}>
-              End
+              {t.coach.endTime}
             </label>
             <input
               id="appt-end"
@@ -93,13 +96,13 @@ export default function AppointmentForm({
       </div>
       <div className="mt-4">
         <label htmlFor="appt-notes" className={label}>
-          Notes (optional)
+          {t.coach.notesOptional}
         </label>
         <input
           id="appt-notes"
           name="notes"
           maxLength={500}
-          placeholder="Focus, location…"
+          placeholder={t.coach.notesPlaceholder}
           className={input}
         />
       </div>
@@ -108,7 +111,7 @@ export default function AppointmentForm({
         disabled={pending}
         className="mt-4 rounded-full bg-brand-500 px-8 py-2.5 text-sm font-bold text-white transition-all hover:bg-brand-400 disabled:opacity-60"
       >
-        {pending ? "Saving…" : "Schedule session"}
+        {pending ? t.common.saving : t.common.scheduleSession}
       </button>
       {state?.error && (
         <p role="alert" className="mt-2 text-sm text-red-400">
@@ -117,7 +120,7 @@ export default function AppointmentForm({
       )}
       {state?.ok && (
         <p role="status" className="mt-2 text-sm text-green-400">
-          Scheduled.
+          {t.common.scheduled}
         </p>
       )}
     </form>

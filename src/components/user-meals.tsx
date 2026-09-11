@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { checkMeal, logWater, type ExtraLog, type FoodItem, type MealWithFood } from "@/lib/foods";
 import ExtrasForm from "@/components/extras-form";
+import type { Dict } from "@/lib/locale";
 
 const input =
   "w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm outline-none placeholder:text-slate-500 focus:border-brand-500";
@@ -15,7 +16,7 @@ function MacroLine({ label, value, unit }: { label: string; value: number; unit:
   );
 }
 
-function MealCard({ meal }: { meal: MealWithFood }) {
+function MealCard({ meal, t }: { meal: MealWithFood; t: Dict }) {
   const [state, action, pending] = useActionState(checkMeal, {});
 
   return (
@@ -27,7 +28,7 @@ function MealCard({ meal }: { meal: MealWithFood }) {
         </div>
         {meal.checked && (
           <span className="rounded-full bg-green-500/15 px-3 py-1 text-xs font-bold text-green-400">
-            Eaten ✓
+            {t.meals.eaten}
           </span>
         )}
       </div>
@@ -50,16 +51,16 @@ function MealCard({ meal }: { meal: MealWithFood }) {
         </ul>
       ) : (
         <p className="mt-3 text-sm text-slate-500">
-          No ingredients listed — follow the description above.
+          {t.meals.noIngredients}
         </p>
       )}
 
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-white/10 pt-3">
-        <MacroLine label="Cal" value={meal.totals.calories} unit="" />
-        <MacroLine label="Protein" value={meal.totals.protein} unit="g" />
-        <MacroLine label="Carbs" value={meal.totals.carbs} unit="g" />
-        <MacroLine label="Fat" value={meal.totals.fat} unit="g" />
-        <MacroLine label="Fiber" value={meal.totals.fiber} unit="g" />
+        <MacroLine label={t.meals.calShort} value={meal.totals.calories} unit="" />
+        <MacroLine label={t.meals.protein} value={meal.totals.protein} unit="g" />
+        <MacroLine label={t.meals.carbs} value={meal.totals.carbs} unit="g" />
+        <MacroLine label={t.meals.fat} value={meal.totals.fat} unit="g" />
+        <MacroLine label={t.meals.fiberM} value={meal.totals.fiber} unit="g" />
       </div>
 
       <form action={action} className="mt-4 space-y-2">
@@ -69,8 +70,8 @@ function MealCard({ meal }: { meal: MealWithFood }) {
           name="comment"
           defaultValue={meal.comment}
           maxLength={300}
-          placeholder="Ate 350g instead of 200g…"
-          aria-label={`Comment on ${meal.name}`}
+          placeholder={t.meals.commentPh}
+          aria-label={`${t.meals.commentOn} ${meal.name}`}
           className={input}
         />
         <button
@@ -82,7 +83,7 @@ function MealCard({ meal }: { meal: MealWithFood }) {
               : "bg-brand-500 text-white hover:bg-brand-400"
           }`}
         >
-          {pending ? "Saving…" : meal.checked ? "Update comment" : "Mark eaten"}
+          {pending ? t.common.saving : meal.checked ? t.meals.updateComment : t.meals.markEaten}
         </button>
         {state?.error && (
           <p role="alert" className="text-xs text-red-400">
@@ -91,7 +92,7 @@ function MealCard({ meal }: { meal: MealWithFood }) {
         )}
         {state?.ok && (
           <p role="status" className="text-xs text-green-400">
-            Saved.
+            {t.common.saved}
           </p>
         )}
       </form>
@@ -99,7 +100,7 @@ function MealCard({ meal }: { meal: MealWithFood }) {
   );
 }
 
-function WaterLogger({ waterMl }: { waterMl: number }) {
+function WaterLogger({ waterMl, t }: { waterMl: number; t: Dict }) {
   const [state, action, pending] = useActionState(logWater, {});
   const liters = (waterMl / 1000).toFixed(2).replace(/\.?0+$/, "");
 
@@ -109,7 +110,7 @@ function WaterLogger({ waterMl }: { waterMl: number }) {
       className="flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4"
     >
       <div className="text-sm">
-        <span className="font-bold">Water today:</span>{" "}
+        <span className="font-bold">{t.meals.waterToday}</span>{" "}
         <span className="font-mono font-extrabold text-brand-400">
           {liters} L
         </span>
@@ -143,17 +144,19 @@ export default function UserMeals({
   foods,
   waterMl,
   live,
+  t,
 }: {
   meals: MealWithFood[];
   extras: ExtraLog[];
   foods: FoodItem[];
   waterMl: number;
   live: boolean;
+  t: Dict;
 }) {
   if (!live) {
     return (
       <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-8 text-center text-sm text-slate-400">
-        Nothing assigned yet.
+        {t.meals.nothingAssigned}
       </p>
     );
   }
@@ -173,24 +176,24 @@ export default function UserMeals({
     <div className="space-y-4">
       <div className="rounded-2xl border border-brand-500/30 bg-brand-500/[0.07] p-5">
         <h2 className="text-sm font-bold uppercase tracking-wider text-slate-300">
-          Today’s totals
+          {t.meals.todayTotals}
         </h2>
         <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1">
-          <MacroLine label="Calories" value={day.calories} unit="" />
-          <MacroLine label="Protein" value={day.protein} unit="g" />
-          <MacroLine label="Carbs" value={day.carbs} unit="g" />
-          <MacroLine label="Fat" value={day.fat} unit="g" />
-          <MacroLine label="Fiber" value={day.fiber} unit="g" />
+          <MacroLine label={t.meals.calories} value={day.calories} unit="" />
+          <MacroLine label={t.meals.protein} value={day.protein} unit="g" />
+          <MacroLine label={t.meals.carbs} value={day.carbs} unit="g" />
+          <MacroLine label={t.meals.fat} value={day.fat} unit="g" />
+          <MacroLine label={t.meals.fiberM} value={day.fiber} unit="g" />
         </div>
       </div>
 
-      <WaterLogger waterMl={waterMl} />
+      <WaterLogger waterMl={waterMl} t={t} />
 
-      <ExtrasForm foods={foods} />
+      <ExtrasForm foods={foods} t={t} />
 
       {extras.length > 0 && (
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-          <h2 className="text-sm font-bold">Extras today</h2>
+          <h2 className="text-sm font-bold">{t.meals.extrasToday}</h2>
           <ul className="mt-2 space-y-1.5 text-sm">
             {extras.map((e) => (
               <li key={e.id} className="flex justify-between gap-2">
@@ -205,7 +208,7 @@ export default function UserMeals({
       )}
 
       {meals.map((m) => (
-        <MealCard key={m.id} meal={m} />
+        <MealCard key={m.id} meal={m} t={t} />
       ))}
     </div>
   );

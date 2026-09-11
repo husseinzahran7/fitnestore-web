@@ -43,6 +43,7 @@ export default async function UserNutritionPage() {
             foods={foods}
             waterMl={waterMl}
             live={live}
+            t={t}
           />
         )}
       </div>

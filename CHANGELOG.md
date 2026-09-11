@@ -8,6 +8,8 @@ Live = backed by Supabase. Mock = hardcoded fallback when unconfigured.
   (user → /dashboard, coach → /coach, admin → /admin), guards + ?next= return.
 - 18-table schema with owner/coach/admin RLS, TO-clauses, Data API grants,
   storage buckets (progress_photos private, avatars public).
+- Full ar/en coverage: every page, form, board, error string keyed in
+  both locales, compile-time parity check, RTL shell.
 - Email + Google OAuth (button + callback; provider switch is human dashboard job).
 - Demo accounts panel on login with one-tap fill.
 - Demo panel gated behind NEXT_PUBLIC_SHOW_DEMO_LOGINS (production

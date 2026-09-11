@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, requireActive } from "@/lib/supabase/server";
+import { getDict } from "@/lib/i18n";
 import type { CoachCard, CoachDetail, ConsultState } from "@/lib/coach-data";
 import { SPECIALTIES } from "@/lib/coach-data";
 
@@ -69,24 +70,25 @@ export async function requestConsult(
   _prev: ConsultState,
   formData: FormData
 ): Promise<ConsultState> {
+  const t = await getDict();
   const coachId = String(formData.get("coachId") ?? "");
   const note = String(formData.get("note") ?? "").trim().slice(0, 500);
-  if (!coachId) return { error: "Invalid request." };
+  if (!coachId) return { error: t.errors.invalid };
 
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet." };
+    return { error: t.errors.noSupabase };
   }
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Sign in to request a consult." };
-  if (!(await requireActive())) return { error: "Account suspended." };
+  if (!user) return { error: t.errors.signToRequest };
+  if (!(await requireActive())) return { error: t.errors.suspended };
 
   const coach = await getCoach(coachId);
-  if (!coach) return { error: "Coach not found." };
+  if (!coach) return { error: t.errors.coachMissing };
 
   const label = coach.freeConsult ? "Free consult request" : "Paid session request";
   const { data: conv, error: convError } = await supabase
@@ -94,7 +96,7 @@ export async function requestConsult(
     .insert({ created_by: user.id })
     .select("id")
     .single();
-  if (convError || !conv) return { error: "Couldn't start chat. Try again." };
+  if (convError || !conv) return { error: t.errors.noChat };
 
   // Best-effort orphan cleanup. Child rows (participants, messages,
   // request) all hang off conversations ON DELETE CASCADE, so one
@@ -109,7 +111,7 @@ export async function requestConsult(
     .insert({ conversation_id: conv.id, profile_id: user.id });
   if (p1) {
     await dropThread();
-    return { error: "Couldn't start chat. Try again." };
+    return { error: t.errors.noChat };
   }
 
   const { error: rError } = await supabase.from("consult_requests").insert({
@@ -120,7 +122,7 @@ export async function requestConsult(
   });
   if (rError) {
     await dropThread();
-    return { error: "Couldn't send request. Try again." };
+    return { error: t.errors.noRequest };
   }
 
   const { error: mError } = await supabase.from("messages").insert({
@@ -130,7 +132,7 @@ export async function requestConsult(
   });
   if (mError) {
     await dropThread();
-    return { error: "Couldn't send request. Try again." };
+    return { error: t.errors.noRequest };
   }
 
   revalidatePath("/dashboard/messages");
@@ -185,22 +187,23 @@ export async function decideConsult(
   _prev: DecideState,
   formData: FormData
 ): Promise<DecideState> {
+  const t = await getDict();
   const requestId = String(formData.get("requestId") ?? "");
   const decision = String(formData.get("decision") ?? "");
   if (!requestId || (decision !== "accepted" && decision !== "declined")) {
-    return { error: "Invalid request." };
+    return { error: t.errors.invalid };
   }
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet." };
+    return { error: t.errors.noSupabase };
   }
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You're signed out. Sign in again." };
-  if (!(await requireActive())) return { error: "Account suspended." };
+  if (!user) return { error: t.errors.signedOut };
+  if (!(await requireActive())) return { error: t.errors.suspended };
 
   const { data: req } = await supabase
     .from("consult_requests")
@@ -209,7 +212,7 @@ export async function decideConsult(
     .eq("coach_id", user.id)
     .eq("status", "pending")
     .single();
-  if (!req) return { error: "Request not found." };
+  if (!req) return { error: t.errors.requestMissing };
 
   if (decision === "accepted") {
     // Own row via the plain self-insert policy — no cross-table checks.
@@ -218,13 +221,13 @@ export async function decideConsult(
       .from("conversation_participants")
       .insert({ conversation_id: req.conversation_id, profile_id: user.id });
     if (joinError && joinError.code !== "23505")
-      return { error: "Couldn't join chat. Try again." };
+      return { error: t.errors.cantJoin };
   }
   const { error: updError } = await supabase
     .from("consult_requests")
     .update({ status: decision })
     .eq("id", requestId);
-  if (updError) return { error: "Couldn't update. Try again." };
+  if (updError) return { error: t.errors.cantUpdate };
 
   revalidatePath("/coach/messages");
   return {};
@@ -285,39 +288,40 @@ export async function uploadAvatar(
   _prev: ProfileState,
   formData: FormData
 ): Promise<ProfileState> {
+  const t = await getDict();
   const file = formData.get("avatar");
   if (!(file instanceof File) || file.size === 0) {
-    return { error: "Choose a photo first." };
+    return { error: t.errors.pickPhoto };
   }
   if (!ALLOWED_AVATARS.includes(file.type)) {
-    return { error: "JPEG, PNG, or WebP only." };
+    return { error: t.errors.photoTypes };
   }
-  if (file.size > 2 * 1024 * 1024) return { error: "Max 2 MB." };
+  if (file.size > 2 * 1024 * 1024) return { error: t.errors.avatarSize };
 
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet." };
+    return { error: t.errors.noSupabase };
   }
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You're signed out. Sign in again." };
-  if (!(await requireActive())) return { error: "Account suspended." };
+  if (!user) return { error: t.errors.signedOut };
+  if (!(await requireActive())) return { error: t.errors.suspended };
 
   const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
   const path = `${user.id}/avatar.${ext}`;
   const { error: upError } = await supabase.storage
     .from("avatars")
     .upload(path, file, { contentType: file.type, upsert: true });
-  if (upError) return { error: "Couldn't upload. Try again." };
+  if (upError) return { error: t.errors.cantUpload };
 
   const { error: dbError } = await supabase.from("coach_profiles").upsert(
     { profile_id: user.id, avatar_path: path },
     { onConflict: "profile_id" }
   );
-  if (dbError) return { error: "Photo saved, profile link failed." };
+  if (dbError) return { error: t.errors.avatarLinkFail };
 
   revalidatePath("/coaches");
   revalidatePath("/coach/profile");
@@ -328,6 +332,7 @@ export async function saveCoachProfile(
   _prev: ProfileState,
   formData: FormData
 ): Promise<ProfileState> {
+  const t = await getDict();
   const displayName = String(formData.get("displayName") ?? "").trim().slice(0, 80);
   const bio = String(formData.get("bio") ?? "").trim().slice(0, 1000);
   const specialties = formData
@@ -343,19 +348,19 @@ export async function saveCoachProfile(
     .slice(0, 20);
   const whatsapp = String(formData.get("whatsapp") ?? "").replace(/\D/g, "").slice(0, 20);
   const freeConsult = formData.get("freeConsult") === "on";
-  if (!displayName) return { error: "Display name can't be empty." };
+  if (!displayName) return { error: t.errors.displayEmpty };
 
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet — profile not saved." };
+    return { error: t.errors.noSupabaseSave };
   }
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You're signed out. Sign in again." };
-  if (!(await requireActive())) return { error: "Account suspended." };
+  if (!user) return { error: t.errors.signedOut };
+  if (!(await requireActive())) return { error: t.errors.suspended };
 
   const { error } = await supabase.from("coach_profiles").upsert(
     {
@@ -371,7 +376,7 @@ export async function saveCoachProfile(
     },
     { onConflict: "profile_id" }
   );
-  if (error) return { error: "Couldn't save. Try again." };
+  if (error) return { error: t.errors.cantSave };
 
   revalidatePath("/coaches");
   revalidatePath("/coach/profile");
@@ -428,23 +433,24 @@ export interface ManagedUser {
 async function requireSuperadmin(): Promise<
   { supabase: Awaited<ReturnType<typeof createClient>> } | { error: string }
 > {
+  const t = await getDict();
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet." };
+    return { error: t.errors.noSupabase };
   }
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You're signed out. Sign in again." };
-  if (!(await requireActive())) return { error: "Account suspended." };
+  if (!user) return { error: t.errors.signedOut };
+  if (!(await requireActive())) return { error: t.errors.suspended };
   const { data: me } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .single();
-  if (me?.role !== "superadmin") return { error: "Superadmins only." };
+  if (me?.role !== "superadmin") return { error: t.errors.ownersOnly };
   return { supabase };
 }
 
@@ -477,10 +483,11 @@ export async function setUserRole(
   _prev: UserAdminState,
   formData: FormData
 ): Promise<UserAdminState> {
+  const t = await getDict();
   const id = String(formData.get("id") ?? "");
   const role = String(formData.get("role") ?? "");
   if (!id || !["user", "coach", "admin"].includes(role)) {
-    return { error: "Invalid request." };
+    return { error: t.errors.invalid };
   }
   const gate = await requireSuperadmin();
   if ("error" in gate) return { error: gate.error };
@@ -490,7 +497,7 @@ export async function setUserRole(
     .update({ role })
     .eq("id", id)
     .neq("role", "superadmin");
-  if (error) return { error: "Couldn't save. Try again." };
+  if (error) return { error: t.errors.cantSave };
   revalidatePath("/admin/users");
   return { ok: true };
 }
@@ -499,9 +506,10 @@ export async function setUserDisabled(
   _prev: UserAdminState,
   formData: FormData
 ): Promise<UserAdminState> {
+  const t = await getDict();
   const id = String(formData.get("id") ?? "");
   const disabled = formData.get("disabled") === "true";
-  if (!id) return { error: "Invalid request." };
+  if (!id) return { error: t.errors.invalid };
   const gate = await requireSuperadmin();
   if ("error" in gate) return { error: gate.error };
   const { error } = await gate.supabase
@@ -509,7 +517,7 @@ export async function setUserDisabled(
     .update({ disabled })
     .eq("id", id)
     .neq("role", "superadmin");
-  if (error) return { error: "Couldn't save. Try again." };
+  if (error) return { error: t.errors.cantSave };
   revalidatePath("/admin/users");
   return { ok: true };
 }
@@ -518,32 +526,33 @@ export async function decideApproval(
   _prev: DecideState,
   formData: FormData
 ): Promise<DecideState> {
+  const t = await getDict();
   const profileId = String(formData.get("profileId") ?? "");
   const approved = formData.get("approved") === "true";
-  if (!profileId) return { error: "Invalid request." };
+  if (!profileId) return { error: t.errors.invalid };
   let supabase;
   try {
     supabase = await createClient();
   } catch {
-    return { error: "Supabase not connected yet." };
+    return { error: t.errors.noSupabase };
   }
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "You're signed out. Sign in again." };
-  if (!(await requireActive())) return { error: "Account suspended." };
+  if (!user) return { error: t.errors.signedOut };
+  if (!(await requireActive())) return { error: t.errors.suspended };
   // RLS admin-all policy is the real gate; this keeps honest errors.
   const { data: me } = await supabase
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .single();
-  if (me?.role !== "admin" && me?.role !== "superadmin") return { error: "Admins only." };
+  if (me?.role !== "admin" && me?.role !== "superadmin") return { error: t.errors.adminsOnly };
   const { error } = await supabase
     .from("coach_profiles")
     .update({ approved })
     .eq("profile_id", profileId);
-  if (error) return { error: "Couldn't update. Try again." };
+  if (error) return { error: t.errors.cantUpdate };
   revalidatePath("/admin/coaches");
   revalidatePath("/coaches");
   return {};
